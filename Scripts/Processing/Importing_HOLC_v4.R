@@ -80,6 +80,7 @@ HOLC = HOLCinit = geojson_sf(file.path(DATA.IN,  'HOLC Maps','holc_polygons','fu
   dplyr::select(state, city, polygon_id = neighborhood_id, name, ID, GRADE) %>% # area_description_data comes from sep. sheet (easier than parsing)
   st_make_valid()
 
+color.map =  c("A" = "green", "B" = "blue", "C" = "yellow", "D" = "red")
 
 ######
 ## Read in US
@@ -563,9 +564,12 @@ HOLC = merge(x=HOLC, y=HOLC.dd[,c('polygon_id','NBlack_YN','NBlack_PCT','Rent35_
 
 # WATTS.SG = c(7547, 7550) #polygon_id  # LA: map_id==16
 # xx = HOLC %>% dplyr::filter(map_id==16 & polygon_id %in% WATTS.SG)
-color.map =  c("A" = "green", "B" = "blue", "C" = "yellow", "D" = "red")
+
 xx = HOLC %>% dplyr::filter(state=='MI') # dplyr::filter(map_id==69) #--> 68 is MD, which has lots of info digitized.
 ggplot(data=xx, aes(fill=GRADE)) + geom_sf() + scale_fill_manual(values = color.map)
+
+
+
 
 
 ######
@@ -577,17 +581,19 @@ FIPS = st_as_sf(counties()) %>% st_transform(st_crs(HOLC))
 HOLC = HOLC %>% st_join(FIPS %>% dplyr::select(STATEFP, COUNTYFP), largest=T) %>%
   dplyr::mutate(STCO = paste0(STATEFP, COUNTYFP))
 
-saveRDS(HOLC, file.path(WORK.OUT, paste0('HOLC_with_data----',Sys.Date(), '.rds')))
-HOLC = readRDS(jLoad(WORK.OUT, 'HOLC_with_data'))
+# Save in list below with BG ZCTA full.
+
+
+
+
+####---- Get BG and ZCTA data and shapefiles to intersect----####
+
+##--> Download data BY block group for each FIPS that touches (taking unique)  # ex: B25003_002 is "renter-occupied housing unit"; _001 is total housing units
+# lv = load_variables(dataset = 'acs5', year=2018, cache=TRUE)
+# lv %>% dplyr::filter(grepl('HEAT', concept, ignore.case = T))
 
 
 using.fips = unique(HOLC[,c('STATEFP','COUNTYFP','STCO')] %>% st_set_geometry(NULL) %>% dplyr::filter(!is.na(STATEFP)))
-
-
-##--> Download data BY block group for each FIPS that touches (taking unique)  # ex: B25003_002 is "renter-occupied housing unit"; _001 is total housing units
-
-# lv = load_variables(dataset = 'acs5', year=2018, cache=TRUE)
-# lv %>% dplyr::filter(grepl('HEAT', concept, ignore.case = T))
  
 BG = map(split(using.fips, 1:NROW(using.fips)), function(z){
   sfp = as.character(z$STATEFP)
@@ -688,190 +694,24 @@ ZCTA = ZCTA %>%
 #                        Maj = shareArea>.80) %>%
 #           dplyr::arrange(AFFGEOID, GRADE)
 
-BG.int.full = st_intersection(BG, HOLC) %>% 
-  dplyr::mutate(segmentArea = as.numeric(st_area(.))) %>%
-  dplyr::arrange(AFFGEOID, GRADE)
-
 # ZCTA.int = st_intersection(ZCTA, HOLC %>% group_by(GRADE) %>% dplyr::summarize(.)) %>% 
 #   dplyr::mutate(shareArea = as.numeric(st_area(.))/ZCTA_AREA,
 #                 Maj = shareArea>.80) %>%
 #   dplyr::arrange(AFFGEOID10, GRADE)
+
+BG.int.full = st_intersection(BG, HOLC) %>% 
+  dplyr::mutate(segmentArea = as.numeric(st_area(.))) %>%
+  dplyr::arrange(AFFGEOID, GRADE)
+
+
 
 ZCTA.int.full = st_intersection(ZCTA, HOLC) %>%
   dplyr::mutate(segmentArea = as.numeric(st_area(.))) %>%
   dplyr::arrange(AFFGEOID10, GRADE)
 
 
-saveRDS(list(BG.int.full, ZCTA.int.full), file.path(WORK.OUT, paste0('BG_ZCTA_int----',Sys.Date(),'.rds')))
+saveRDS(list(BG.int.full, ZCTA.int.full, HOLC), file.path(WORK.OUT, paste0('BG_ZCTA_HOLC_int----',Sys.Date(),'.rds')))
 
 
 
 ### End here. Moved analysis to Analysis file.
-
-
-BG.maj = BG.int %>% dplyr::filter(shareArea>.80) 
-
-ggplot(BG.int %>% dplyr::filter(Maj==T &  ST=='24'), aes(col=GRADE)) + geom_sf()
-
-
-# saved as temp_2.RData #
-# save.image("Z:/user/ajk41/Low Income Energy/Low Income Energy Rproj/temp_2.RData")
-# load("Z:/user/ajk41/Low Income Energy/Low Income Energy Rproj/temp_2.RData")
-
-## Pull and compile relevant household heating fuel data ##
-# 2015 ACS:  DP04_0062E is all occupied Hh; DP04_0063...71E are counts by type
-#            Where 63 is gas; 65 is electricity; 71 is no fuel.
-#    Damnit, 2015 ACS doesn't do block group on any of the energy fields.
-#    https://api.census.gov/data/2000/sf3/variables.html (navigate with this; add ".html" to anything JSON-like)
-
-require(stargazer)
-require(sandwich)
-require(lmtest)
-require(plm)
-
-
-#--> Interpolate BG data over HOLC polygons
-BG.maj.expanded = st_intersection(BG.maj, HOLC %>% dplyr::select(-GRADE)) %>% mutate(INT_AREA = as.numeric(st_area(.)),
-                                                                                     SHARE    = INT_AREA/BG_AREA) %>% arrange(GEOID)
-
-
-insert.narm = F
-BG.maj.collapsed = BG.maj.expanded %>% group_by(YEAR, ST, CO, TRACT, BG, GEOID, GRADE, map_id) %>%
-                                        dplyr::summarize(summary_value = mean(summary_value, na.rm=insert.narm),
-                                                  Pct.gas = mean(Pct.gas, na.rm=insert.narm),
-                                                  Pct.electric = mean(Pct.electric, na.rm=insert.narm),
-                                                  Pct.other = mean(Pct.other, na.rm=insert.narm),
-                                                  Pct.woodcoalker = mean(Pct.woodcoalker, na.rm=insert.narm),
-                                                  Pct.none = mean(Pct.none, na.rm=insert.narm),
-                                                  MedIncome1990 = mean(MedIncome1990, na.rm=insert.narm),
-                                                  ID = paste(ID, collapse = ', '),
-                                                  names = paste(name, collapse = ', '),
-                                                  repair_class = paste(repair_class, collapse = ', '),
-                                                  Rent35_Mean = sum(Rent35_Mean * (SHARE/sum(SHARE)), na.rm=insert.narm),
-                                                  Rent3739_Mean = sum(Rent3739_Mean * (SHARE/sum(SHARE)), na.rm=insert.narm),
-                                                  Minc = sum(Minc*(SHARE/sum(SHARE)), na.rm=insert.narm),
-                                                  NBlack_PCT = sum(as.numeric(NBlack_PCT)*(SHARE/sum(SHARE)), na.rm=insert.narm)) %>%
-                                      dplyr::arrange(GEOID) %>% ungroup()
-
-BG.maj.collapsed = BG.maj.collapsed %>% mutate(GRADEf = factor(GRADE, levels=c('C','D','B','A')))
-
-
-robust.se <- function(model, cluster){
-  require(sandwich)
-  require(lmtest)
-  M <- length(unique(cluster))
-  N <- length(cluster)
-  K <- model$rank
-  dfc <- (M/(M - 1)) * ((N - 1)/(N - K))
-  uj <- apply(estfun(model), 2, function(x) tapply(x, cluster, sum));
-  rcse.cov <- dfc * sandwich(model, meat = crossprod(uj)/N)
-  rcse.se <- coeftest(model, rcse.cov)
-  return(list(rcse.cov, rcse.se))
-}
-
-#Woodcoalker = LP, wood, coal, kerosene.
-
-# http://www.drewdimmery.com/robust-ses-in-r/
-# use:
-BGMC = BG.maj.collapsed %>% dplyr::filter(!is.na(Minc) & !is.na(MedIncome1990) & !is.na(Pct.none) & Minc<30000)
-res1 = robust.se(lm(Pct.none ~ GRADEf + as.factor(map_id), data=BGMC), BGMC$ST)[[2]]
-res2 = robust.se(lm(Pct.none ~ GRADEf + poly(Minc, 2) +as.factor(paste0(map_id)), data=BGMC), BGMC$ST)[[2]]
-res3 = robust.se(lm(Pct.none ~ GRADEf + poly(Minc, 2) + poly(MedIncome1990, 2) +as.factor(paste0(map_id)), data=BGMC), BGMC$ST)[[2]]
-
-stargazer(res1, res2, res3, dep.var.caption='Pct. no heating fuel', omit='map_id', omit.labels= c('City FE'), notes = 'Robust SE clustered by state')
-
-# some ideas: just use wood+coal? justify no county fips FE? Need more rent data.
-
-
-## Heartland
-BGMC = BG.maj.collapsed %>% filter(!is.na(Minc) & !is.na(MedIncome1990) & !is.na(Pct.none) & Minc<30000) # there are some not-possible incomes in here.
-res1 = robust.se(lm(Pct.none ~ GRADEf + as.factor(map_id), data=BGMC), BGMC$ST)[[2]]
-res2 = robust.se(lm(Pct.none ~ GRADEf + poly(Minc, 2) +as.factor(paste0(map_id)), data=BGMC), BGMC$ST)[[2]]
-res3 = robust.se(lm(Pct.none ~ GRADEf + poly(Minc, 2) + poly(MedIncome1990, 2) +as.factor(paste0(map_id)), data=BGMC), BGMC$ST)[[2]]
-
-stargazer(res1, res2, res3, dep.var.caption='Pct. no heating fuel', omit='map_id', omit.labels= c('City FE'), notes = 'Robust SE clustered by state')
-
-
-saveRDS(BG.maj.collapsed, file=file.path(WORK.OUT, 'Heartland_Data_snapshot_10_2_2017.rds'))
-boxplot(Minc ~ GRADE, BGMC) #BGMC is cut off at $30k.
- 
-
-
-
-
- P080A001
-
-
-summary(lm(Pct.other ~ GRADEf + Minc + Rent3739_Mean, data=BG.maj.collapsed))
-
-summary(lm(Pct.none ~ GRADEf + Minc + as.factor(paste0(ST, CO)), data=BG.maj.collapsed))
-
-
-
-
-
-## year 2000 Decennial Census 
-ttemp2000 = reduce(map(using.fips, function(z){
-  print(paste0(z$STATEFP, "-", z$COUNTYFP))
-  get_decennial(state=z$STATEFP, county=z$COUNTYFP, geography='block group', year=2000, sumfile='sf3',
-                variables = paste0('H0400',formatC(2:10, width=2, flag='0')), summary_var = 'H040001', output='wide', geometry=F)
-                                            }), rbind) %>% 
-                   mutate(YEAR = 2000,
-                          Pct.gas = H040002/summary_value,
-                          Pct.electric = H040004/summary_value,
-                          Pct.other = (summary_value-H040002-H040004)/summary_value,
-                          Pct.none = H040010/summary_value) %>%
-                    dplyr::select(GEOID, YEAR, Pct.gas, Pct.electric, Pct.other, Pct.none) %>%
-                    arrange(GEOID)
-
-## year 1990 Decennial Census
-ttemp1990 = reduce(map(using.fips, function(z){
-  print(paste0(z$STATEFP, "-", z$COUNTYFP))
-  get_decennial(state=z$STATEFP, county=z$COUNTYFP, geography='block group', year=1990, sumfile='sf3',
-                variables = paste0('H030000',formatC(1:9, width=1, flag='0')), output='wide', geometry=F)
-}), rbind)  %>% mutate(summary_value = rowSums(.[1:9])) %>%
-  mutate(YEAR = 1990,
-         Pct.gas = H0300001/summary_value,
-         Pct.electric = H0300003/summary_value,
-         Pct.other = (summary_value-H0300001-H0300003)/summary_value,
-         Pct.none = H0300009/summary_value) %>%
-  dplyr::select(GEOID, YEAR, Pct.gas, Pct.electric, Pct.other, Pct.none) %>%
-  arrange(GEOID)
-
-## year 1980 decennial census (with help from NHGIS)
-ttemp1980 = read_csv(file=file.path('Z:/user/ajk41/Low Income Energy/Census Data/1980_NHGIS/nhgis0008_csv/nhgis0008_ds107_1980_blck_grp_01598.csv')) %>%
-            mutate(GEOID = paste0(STATEA, COUNTYA, formatC(as.numeric(TRACTA), width=6, flag="0"), BLCK_GRPA)) %>%
-            group_by(GEOID, YEAR) %>% summarize(DEWAA001 = sum(DEWAA001, DEWAB001, na.rm=T),   ##--> add together all of the tract's counts for each utility reported, and add in the "rural area" counts as well.
-                                                DEWAA002 = sum(DEWAA002, DEWAB002, na.rm=T),  ###--> the multiple records per GEOID is a result of tracts that pass over CDA's, Places, etc.
-                                                DEWAA003 = sum(DEWAA003, DEWAB003, na.rm=T),
-                                                DEWAA004 = sum(DEWAA004, DEWAB004, na.rm=T),
-                                                DEWAA005 = sum(DEWAA005, DEWAB005, na.rm=T),
-                                                DEWAA006 = sum(DEWAA006, DEWAB006, na.rm=T),
-                                                DEWAA007 = sum(DEWAA007, DEWAB007, na.rm=T),
-                                                DEWAA008 = sum(DEWAA008, DEWAB008, na.rm=T)) %>% ungroup(.) %>%
-                          mutate(summary_value = rowSums(.[grep("DEWAA", names(.))]),
-                                 Pct.gas = DEWAA001/summary_value,
-                                 Pct.electric = DEWAA003/summary_value,
-                                 Pct.other = (summary_value-DEWAA001-DEWAA003)/summary_value,
-                                 Pct.none = DEWAA008/summary_value) %>%
-      dplyr::select(GEOID, YEAR, Pct.gas, Pct.electric, Pct.other, Pct.none) %>%
-      arrange(GEOID)
-            
-
-BG.int = merge(x=BG.int, y=bind_rows(list(ttemp2000, ttemp1990, ttemp1980)), by = 'GEOID', all.x=T, all.y=F)
-# summary(lm(Pct.none ~ as.factor(YEAR) + as.factor(GRADE) + as.factor(paste0(STATEFP, COUNTYFP)), data=BG.int %>% filter(Maj==T)))  #-> well, this is a good start.
-
-## Taking just the "major" block-groups (those with >80% of overlap with a single GRADE)
-BG.maj = BG.int %>% filter(Maj==T)
-
-for(st in unique(STATES???))
-st = 24
-
-tBG = BG.maj %>% filter(STATEFP==st)
-tHOLC = HOLC %>% filter(STATE_FIPS==st)
-
-
-
-
-
-
