@@ -1,6 +1,6 @@
 
 #' ---
-#' title: "Redlining"
+#' title: "Energy Insecurity and Redlined America"
 #' author: A. Justin Kirkpatrick
 #' output:
 #'   pdf_document:
@@ -16,7 +16,7 @@
 ########
 ## Analysis for Redlining
 ########
-c("#FFFFFF", "#FFFFFF", "#FFFFFF")
+
 require(rgdal)
 require(rgeos)
 require(sp)
@@ -39,6 +39,10 @@ require(modelsummary)
 require(gtable)
 require(knitr)
 require(kableExtra)
+require(units)
+require(prettyunits)
+require(scales)
+require(DescTools)
 options(tigris_use_cache = TRUE)
 # numCores = 2
 # 
@@ -53,6 +57,46 @@ options(tigris_use_cache = TRUE)
 
 #' # Introduction
 #' This is the section with the introduction
+#' 
+#' ## Details and description
+#' 
+#' #### Define energy burden.
+#' 
+#' #### Cite severity of problem
+#' 
+#' #### Link between energy burden and energy efficiency
+#' 
+#' #### Obvious reason: being poor and short-sighted
+#' 
+#' #### Conditional on income, problem still persists!
+#' 
+#' #### Potential explanations (brief)
+#' This section is brief. Full literature review comes later. Or maybe the full lit for why is here?
+#' 
+#' #### Causal chain is really long
+#' 
+#' #### Potential chain (redlining--> lack of ownership --> why stay in area?)
+#' 
+#' ## This paper here...
+#' 
+#' #### Explores the role of redlining in explaining energy burden
+#' By isolating the energy outcomes that can only be explained by redlining
+#' 
+#' #### Plausibly exogenous variation
+#' Conditional on similar (but not red-lined) nearby neighborhoods. Observables.
+#' 
+#' #### Extracted 1930's data to understand redlining
+#' Survey data created by federal HOLC employees in 1936-1939 provides neighborhood-specific data on observable characteristics that can be used to identify the effects of redlining. The designation of red- and yellow-lined areas (as well as green and blue) aggregate away important variation between each grading. Not all redlined areas are identical, nor are all yellow areas. Survey data recorded as part of the redline designation process provides important, but largely unusued, sources of variation. Within-grade variation in housing is common with reported average rents, median income, repair status of housing, share of housing developed, and construction type. Prior to being redlined, areas with high percentages of low-income or minority populations were more likely to have lower rents and lower housing quality. Frequently, the reason for a low-income or minority area's location was associated with the quality of the geography or proximity to natural features - low-lying areas that frequently flooded or areas too steep for conventional building were generally populated by lower-income individuals. These same features also foment low investment in housing stock, and can explain current inefficiencies in  housing regardless of the HOLC grade. With HOLC survey data in hand, I can control for these features and separate out the effect of HOLC redlining from the determinants of HOLC grading.
+#' 
+#' #### Identification key: there are neighborhoods with identical economics and racial composition where some surveyors designated them red and some designated yellow.
+#' 
+#' #### Poor whites vs. poor blacks
+#' 
+#' #### Historic data merged to block groups to leverage modern outcomes
+#' To assess current energy outcomes, I merge original HOLC neighborhoods to modern census block groups, extracting ACS and census indicators of high energy burden. Census block groups match the granularity of HOLC neighborhoods reasonably well. However, boundaries do not tend to coincide exactly, requiring some aggregation.  Once linked, I compare modern energy outcomes with HOLC grading, conditioning on observable characteristics both in the 1930's (selection), and in the present. While an individual household-level analysis would provide the clearest evidence, household-level energy consumption data is limited for privacy reasons, especially at the spatial resolution of HOLC neighborhoods, which can have as few as 100 homes in them.
+#' 
+#' 
+#' #### 
 #' 
 #' # Data
 #' This is the section with the data. 
@@ -75,76 +119,261 @@ options(tigris_use_cache = TRUE)
     BG.int.full = BGZ[[1]]
     ZCTA.int.full = BGZ[[2]]
     HOLC = BGZ[[3]] # readRDS(jLoad(WORK.OUT, 'HOLC_with_data')) # 10-12
+  
     
     # Dissolve to BG with data on share in each GRADE ---------
     # Summarize (dissolve) BG and ZCTAs and average HOLC-data within.
     #         - Hopefully a reasonable number of ~100% in A,B,C,or D.
     BG.int = BG.int.full %>% 
       group_by_at(vars(AFFGEOID, TRACTCE, BLKGRPCE, UtilityGas:TotalRace)) %>%
-      summarize(NBlack_YN = max(NBlack_YN), NBlack_PCT = weighted.mean(as.numeric(NBlack_PCT), w = segmentArea),
-                Rent35_Mean = weighted.mean(Rent35_Mean, w=segmentArea), Rent3739_Mean = weighted.mean(Rent3739_Mean, w = segmentArea), 
-                Minc = weighted.mean(Minc, w=segmentArea),
-                GRADE.A = sum(segmentArea[GRADE=='A'])/sum(segmentArea),
-                GRADE.B = sum(segmentArea[GRADE=='B'])/sum(segmentArea),
-                GRADE.C = sum(segmentArea[GRADE=='C'])/sum(segmentArea),
-                GRADE.D = sum(segmentArea[GRADE=='D'])/sum(segmentArea),
-                GRADE.NA = sum(segmentArea[is.na(GRADE)])/sum(segmentArea),
-                GRADE.max = factor(GRADE[which.max(segmentArea)]),
-                share.max = max(segmentArea)/sum(segmentArea)) %>% # Note: check that no AFFGEOID are duplicated
+      summarize(NBlack_YN = max(NBlack_YN, na.rm=T),
+                NBlack_PCT = weighted.mean(as.numeric(NBlack_PCT), w = segmentArea, na.rm=T),
+                Rent35_Mean = weighted.mean(Rent35_Mean, w=segmentArea, na.rm=T), 
+                Rent3739_Mean = weighted.mean(Rent3739_Mean, w = segmentArea, na.rm=T), 
+                Minc = weighted.mean(Minc, w=segmentArea, na.rm=T),
+                GRADE.A = sum(segmentArea[GRADE=='A'], na.rm=T)/sum(segmentArea),
+                GRADE.B = sum(segmentArea[GRADE=='B'], na.rm=T)/sum(segmentArea),
+                GRADE.C = sum(segmentArea[GRADE=='C'], na.rm=T)/sum(segmentArea),
+                GRADE.D = sum(segmentArea[GRADE=='D'], na.rm=T)/sum(segmentArea),
+                GRADE.NA = sum(segmentArea[is.na(GRADE)], na.rm=T)/sum(segmentArea),
+                GRADE.max = replace_na(GRADE[which.max(segmentArea)], 'X'),
+                share.max = max(segmentArea, na.rm=T)/sum(segmentArea)) %>% # Note: check that no AFFGEOID are duplicated
       dplyr::mutate(STATEFP = gsub(pattern = '.*US([0-9]{2})([0-9]{3}).*', '\\1', x=AFFGEOID),
                     COUNTYFP = gsub(pattern = '.*US([0-9]{2})([0-9]{3}).*', '\\2', x=AFFGEOID),
                     STCO =     gsub(pattern = '.*US([0-9]{5}).*', '\\1', x=AFFGEOID)) %>%
       dplyr::mutate(isD = GRADE.D>.8,
-                    GRADE.max = relevel(GRADE.max, ref = 'C'))
+                    GRADE.max = factor(GRADE.max, levels = c('C','D','B','A','X')),
+                    MedIncome1936 = Minc/1000,
+                    MedIncome2018 = MedIncome2018/1000)
     
     
-    ZCTA.int = ZCTA.int.full %>% 
+    ZCTA.int = ZCTA.int.full %>% dplyr::filter(TotalFuel>0) %>%
       group_by_at(vars(AFFGEOID10, NAME.zip, UtilityGas:TotalRace)) %>%
-      summarize(NBlack_YN = max(NBlack_YN), NBlack_PCT = weighted.mean(as.numeric(NBlack_PCT), w = segmentArea),
-                Rent35_Mean = weighted.mean(Rent35_Mean, w=segmentArea), Rent3739_Mean = weighted.mean(Rent3739_Mean, w = segmentArea), 
-                Minc = weighted.mean(Minc, w=segmentArea),
-                GRADE.A = sum(segmentArea[GRADE=='A'])/sum(segmentArea),
-                GRADE.B = sum(segmentArea[GRADE=='B'])/sum(segmentArea),
-                GRADE.C = sum(segmentArea[GRADE=='C'])/sum(segmentArea),
-                GRADE.D = sum(segmentArea[GRADE=='D'])/sum(segmentArea),
-                GRADE.NA = sum(segmentArea[is.na(GRADE)])/sum(segmentArea),
-                GRADE.max = factor(GRADE[which.max(segmentArea)], levels=c('C','D','B','A',NA)),
-                share.max = max(segmentArea)/sum(segmentArea)) %>% # Note: check that no AFFGEOID are duplicated %>%
-      st_join(counties(cb=TRUE) %>% dplyr::select(STCO = GEOID) %>% st_transform(st_crs(HOLC))) %>%
-      dplyr::mutate(isD = GRADE.D>.8)
+      summarize(NBlack_YN = max(NBlack_YN, na.rm=T), 
+                NBlack_PCT = weighted.mean(as.numeric(NBlack_PCT), w = segmentArea, na.rm=T),
+                Rent35_Mean = weighted.mean(Rent35_Mean, w=segmentArea, na.rm=T), 
+                Rent3739_Mean = weighted.mean(Rent3739_Mean, w = segmentArea, na.rm=T), 
+                Minc = weighted.mean(Minc, w=segmentArea, na.rm=T),
+                GRADE.A = sum(segmentArea[GRADE=='A'], na.rm=T)/sum(segmentArea),
+                GRADE.B = sum(segmentArea[GRADE=='B'], na.rm=T)/sum(segmentArea),
+                GRADE.C = sum(segmentArea[GRADE=='C'], na.rm=T)/sum(segmentArea),
+                GRADE.D = sum(segmentArea[GRADE=='D'], na.rm=T)/sum(segmentArea),
+                GRADE.NA = sum(segmentArea[is.na(GRADE)], na.rm=T)/sum(segmentArea),
+                GRADE.max = replace_na(GRADE[which.max(segmentArea)], 'X'),
+                share.max = max(segmentArea, na.rm=T)/sum(segmentArea)) %>% # Note: check that no AFFGEOID are duplicated
+      st_join(counties(cb=TRUE) %>% dplyr::select(STCO = GEOID) %>% st_transform(st_crs(HOLC)), largest=TRUE) %>%
+      dplyr::mutate(STATEFP = substr(x=STCO, start=1, stop=2),
+                    COUNTYFP = substr(x = STCO, start = 3, stop=5),
+                    isD = GRADE.D>.8,
+                    GRADE.max = factor(GRADE.max, levels = c('C','D','B','A','X')),
+                    MedIncome1936 = Minc/1000,
+                    MedIncome2018 = MedIncome2018/1000,
+                    zip = as.character(sapply(strsplit(NAME.zip, ' '), '[', 2)))
+    
     
     # stopifnot(sum(duplicated(ZCTA.int$AFFGEOID10))==0)
     stopifnot(sum(duplicated(BG.int$AFFGEOID))==0)
+    stopifnot(sum(duplicated(ZCTA.int$AFFGEOID10))==0)
 
     # end----
 #' 
 #' 
-#' 
+#+ process-2, echo=FALSE, cache = T, warning=F, message=F
+    
+    #### Import RASS data ####
+    RASS09e = fread(file.path(BASE, 'ajk41','Low Income Energy','Data','CA RASS','CA RASS 2009','ddn_electricbillingdatamodels.csv'), na.strings = c('99')) #?97
+    RASS09g = fread(file.path(BASE, 'ajk41','Low Income Energy','Data','CA RASS','CA RASS 2009','ddn_gasbillingdatamodels.csv'), na.strings = c('99'))
+    RASS09s = fread(file.path(BASE, 'ajk41','Low Income Energy','Data','CA RASS','CA RASS 2009','Survdata.csv'), na.strings = c('99'))
+    
+    #### Survey data (one obs. per household)
+    s09 = RASS09s[,.(IDENT, servzip, avginc, homeage, EUTIL, NGUTIL, CZT24, NAC_KWH, NAC_Therms, res, rescnt, kids, adults, seniors, NGSERV, OWNRENT, YRS_RES, BUILTYR, SQFT, PAYHEAT, PHTNGCNT, PHTNGFWL, PHTNGRAD, PHTNGFP, PHTNGOTH, PHTELBSB, PHTELCRH, PHTELCHP, PHTELWHP, PHTELPOR, PHTELOTH, PHTBGCNT)][,zip:=sprintf('%05d', servzip)]
+    
+    
+    #### Consumption data (nest to IDENT)
+    e09.use = melt(RASS09e , id.vars = c('IDENT'), measure = patterns("^r","^d","^u","^hdd[0-9]+","^cdd[0-9]+"), value.name = c('r','d','u','hdd','cdd')) %>%
+      dplyr::filter( !is.na(r) & !is.na(d) & !is.na(u)) %>%
+      dplyr::mutate(r = mdy(r),
+                    u = as.numeric(gsub(',','',u))) %>%
+      dplyr::filter(!is.na(u) & !is.na(hdd) & !is.na(cdd)) %>%
+      dplyr::arrange(IDENT, variable, r) %>%
+      dplyr::select(IDENT, r, d, hdd, cdd, u) %>%
+      group_by(IDENT) %>% dplyr::filter(n()>1 & sd(u)>0) %>%
+      nest(edata = -IDENT)
+      
+    
+    g09.use = melt(RASS09g , id.vars = c('IDENT'), measure = patterns("^r","^d","^u","^hdd[0-9]+","^cdd[0-9]+"), value.name = c('r','d','u','hdd','cdd')) %>%
+      dplyr::filter( !is.na(r) & !is.na(d) & !is.na(u) & d>=0) %>%
+      dplyr::mutate(r = mdy(r),
+                    u = as.numeric(gsub(',','',u))) %>%
+      dplyr::filter(!is.na(u) & !is.na(hdd) & !is.na(cdd)) %>%
+      dplyr::arrange(IDENT, variable, r) %>%
+      dplyr::select(IDENT, r, d, hdd, cdd, u) %>%
+      group_by(IDENT) %>% dplyr::filter(n()>1 & sd(u)>0) %>%
+      nest(gdata = -IDENT)
+    
+    
+    ### Household-level CDD and HDD responses in electricity and gas:
+    e09.use  = e09.use %>%
+      dplyr::mutate(coefrun = map(edata, ~feols(u ~ hdd + cdd, weights=.$d, data = .) %>%
+                                    tidy() %>%
+                                    dplyr::select(term, estimate) %>%
+                                    spread(term, estimate))) %>%
+      unnest(coefrun) %>%
+      dplyr::select(IDENT, intercept.e = `(Intercept)`, cdd.e = cdd, hdd.e = hdd, edata) %>%  ungroup() %>%
+      dplyr::mutate_at(.vars = vars(intercept.e:hdd.e), .funs = ~ Winsorize(., probs=c(.02, .98), na.rm=T))
+    
+    g09.use  = g09.use %>%
+      dplyr::mutate(coefrun = map(gdata, ~feols(u ~ hdd + cdd, weights=.$d, data = .) %>%
+                                    tidy() %>%
+                                    dplyr::select(term, estimate) %>%
+                                    spread(term, estimate))) %>%
+      unnest(coefrun) %>%
+      dplyr::select(IDENT, intercept.g = `(Intercept)`, cdd.g = cdd, hdd.g = hdd, gdata) %>% ungroup() %>%
+      dplyr::mutate_at(.vars = vars(intercept.g:hdd.g), .funs = ~ Winsorize(., probs=c(.02, .98), na.rm=T))
+    
+    
+    all09.use =  inner_join(s09, full_join(e09.use, g09.use, by=c('IDENT')), by='IDENT')
+    
+ 
+    CAZ = ZCTA.int %>% 
+      st_set_geometry(NULL) %>% as_tibble() %>% 
+      inner_join(as_tibble(all09.use) %>% group_by(zip) %>% nest(adata = -(zip)), by='zip') %>%
+      dplyr::mutate(zipcount = map_int(adata, .f = ~ NROW(.)))
+    
+    
 #' This is the text. $f = \frac{b}{c}$.
 #' 
-#+ echo=FALSE, fig.width=7, result='as.is'
-# New 10-13-20:
-# Using shraes of each BG and ZCTA that are D/C/B/A
-# simp1 = feols(fml = OtherSubstandard ~ poly(GRADE.D,2) + MedIncome2018 + Minc + Rent3739_Mean + NBlack_PCT | as.factor(STCO), 
-#               data = BG.int %>% dplyr::filter(!is.na(GRADE.D)))
-                           
-simp2 = feols(fml = OtherSubstandard ~ isD + MedIncome2018 + Minc + Rent3739_Mean + NBlack_PCT | as.factor(STCO), 
-              data = BG.int %>% dplyr::filter(!is.na(GRADE.D& !is.na(GRADE.max))))
+#' ### Census blockgroups
+#' 
+#' 
+#' HOLC grading and survey data are available at the neighborhood level, where the average neighborhood size is approximately `r prettyNum(round(mean(st_area(BG.int)/(1000^2)), 2), big.mark=',')` square kilometers. 
+#' 
+#' 
+#' ### Energy burden
+#' I first examine the incidence of energy burden on minority populations. A model of home selection would clearly predict a relationship between energy burden and income as low-income individuals trade off energy efficient (yet higher cost) housing for lower-cost but energy-inefficient housing. Since a home's energy efficiency is part of a bundle of attributes, households with low income may often trade energy efficiency for other properties, such as larger square footage. Lower efficiency homes may be more expensive to heat to a comfortable standard. However, households with severe budget constraints may select a low-efficiency house and select to spend as little as possible on heating, resulting in very low inside temperatures, lower housing costs, and low energy expenditures.
+#' 
+#' To show the relationship between home energy efficiency and income, I regress the fraction of households reporting substandard heating technology (coal, wood, fuel oil, or ``other''??) in a census block group on measures of income using the following specification:
+#' 
+#' \begin{eqnarray*}
+#' SubstandardHeating_{i} = \beta_0 + \beta_1 MedInc_i + \beta_2 xxx_i + \epsilon_i \\ \nonumber
+#' \end{eqnarray*}
+#' 
+#' 
+#+ echo=FALSE, fig.width=7, result='as.is', message=F, warning=F
+    inc1 = feols(fml = OtherSubstandard ~ MedIncome2018*Black + MedIncome2018*White + Asian + OtherRace | STCO, 
+                 data = BG.int %>% dplyr::filter(TotalFuel>298) %>% st_set_geometry(NULL))
+    
+    inc2 = feols(fml = OtherSubstandard ~ MedIncome2018 | STCO, 
+                 data = BG.int %>% dplyr::filter(share.max>.8 & !is.na(GRADE.max) & GRADE.max!='X') %>% st_set_geometry(NULL))
+    
+    inc3 = feols(fml = OtherSubstandard ~ MedIncome2018 | STCO, 
+                 data = BG.int %>% dplyr::filter(share.max>.95 & !is.na(GRADE.max) & GRADE.max!='X') %>% st_set_geometry(NULL))
+    
+    modelsummary(models = list(inc1, inc2, inc3), se = 'cluster',
+                 output = 'kableExtra',  # instead of latex so that I can use kable_styling(latex_options = 'scale_down') for the table
+                 stars=TRUE, fmt = '%.5f',
+                 notes = 'Robust SE clustered by FIPS county') %>%  # output as kableExtra
+      kable_styling(latex_options = 'scale_down') # to use this kableExtra option!
+    
+    #---end
+#' #### Results
+#' Nothing good to report here. High income, as expected, means less likely to have substandard heating (median income; percent in block-group).
+#' 
+#' 
+#' 
+#+ echo=FALSE, fig.width=7, result='as.is', message=F, warning=F
 
-simp3 = feols(fml = OtherSubstandard ~ as.factor(GRADE.max) + MedIncome2018*Minc + Rent3739_Mean | as.factor(STCO),
-              data = BG.int %>% dplyr::filter(share.max>.8& !is.na(GRADE.max)))
+ 
+    
+BG.list = list(
+  
+  feols(fml = OtherSubstandard ~ as.factor(GRADE.max) + MedIncome2018 + MedIncome1936 + Rent3739_Mean | STCO,
+                  data = BG.int %>% dplyr::filter(share.max>.8 & !is.na(GRADE.max) & GRADE.max!='X') %>% st_set_geometry(NULL)),
+    
+  feols(fml = OtherSubstandard ~ as.factor(GRADE.max) + MedIncome2018*MedIncome1936 + Rent3739_Mean | STCO,
+                  data = BG.int %>% dplyr::filter(share.max>.8 & !is.na(GRADE.max) & GRADE.max!='X') %>% st_set_geometry(NULL))  ,  
+    
+  feols(fml = OtherSubstandard ~ as.factor(GRADE.max) + MedIncome2018*MedIncome1936 + Rent3739_Mean | STCO,
+              data = BG.int %>% dplyr::filter(share.max>.95 & !is.na(GRADE.max) & GRADE.max!='X') %>% st_set_geometry(NULL)),
 
-simp4 = feols(fml = OtherSubstandard ~ as.factor(GRADE.max) +  MedIncome2018+Minc + Rent3739_Mean + NBlack_YN + NBlack_PCT + Black + White + Asian | as.factor(STCO), 
-              data = BG.int %>% dplyr::filter(share.max>.8 & !is.na(GRADE.max)))
+  feols(fml = OtherSubstandard ~ as.factor(GRADE.max) +  MedIncome2018*MedIncome1936 + Rent3739_Mean + Black + White + Asian | STCO, 
+              data = BG.int %>% dplyr::filter(share.max>.8  & GRADE.max!='X') %>% st_set_geometry(NULL))  ,
+  
+  feols(fml = OtherSubstandard ~ as.factor(GRADE.max) +  MedIncome2018*MedIncome1936 + Rent3739_Mean + Black*as.factor(GRADE.max) + White + Asian | STCO, 
+        data = BG.int %>% dplyr::filter(share.max>.8  & GRADE.max!='X') %>% st_set_geometry(NULL))  ,
+  
+  feols(fml = OtherSubstandard ~ as.factor(GRADE.max) +  MedIncome2018*MedIncome1936 + Rent3739_Mean + Black + White + Asian | STCO, 
+              data = BG.int %>% dplyr::filter(share.max>.95 & GRADE.max!='X' ) %>% st_set_geometry(NULL)),
+  
+  feols(fml = OtherSubstandard ~ as.factor(GRADE.max) +  MedIncome2018*MedIncome1936 + Rent3739_Mean + NBlack_YN + NBlack_PCT + Black + White + Asian | STCO, 
+              data = BG.int %>% dplyr::filter(share.max>.8  & GRADE.max!='X') %>% st_set_geometry(NULL))  ,
+  
+  feols(fml = OtherSubstandard ~ as.factor(GRADE.max) +  MedIncome2018*MedIncome1936 + Rent3739_Mean + NBlack_YN + NBlack_PCT + Black + White + Asian | STCO, 
+              data = BG.int %>% dplyr::filter(share.max>.95 & GRADE.max!='X' ) %>% st_set_geometry(NULL))
+)
 
-
-modelsummary(models = list(simp2, simp3, simp4), se = 'cluster',
+modelsummary(models = BG.list, se = 'cluster',
              output = 'kableExtra',  # instead of latex so that I can use kable_styling(latex_options = 'scale_down') for the table
-             stars=TRUE,
+             stars=TRUE, fmt = '%.5f',
+             notes = 'Robust SE clustered by FIPS county') %>%  # output as kableExtra
+  kable_styling(latex_options = 'scale_down') # to use this kableExtra option!
+#'
+#' #### Results
+#' 
+#' Columns 1, 2, 3, and 5 show results using all blockgroups with greater than 80% of total area contained within one HOLC grade. Columns 4 and 6 set the threshold at 95%. Column 1 allows an additive effect for median income in 2018 and 1936 (reported from HOLC surveys), while 2-6 allow an interaction. 
+#' 
+#' As expected, current median blockgroup income predicts a lower share of homes with substandard heating fuel across all models. Median income in 1936 predicts \textbf{higher} prevalance of substandard heating in higher 1936 median income areas. Can I explain this?
+#' 
+#' Columns 4-7 include controls for current racial composition. These results consistently find that higher percentages of Blacks are associated with lower likelihood of substandard heating fuel. \textbf{EXPLAIN!!}
+#' 
+#' The coefficient on HOLC Grade D is positive and significant across all specifications, indicating that, conditional on a rich set of controls including 1936 characteristics to control for selection, areas that were graded "D" by the HOLC are more likely to have substandard heating fuels in 2018 relative to those graded "C".
+#' 
+#' 
+#'
+#' 
+
+#+ eval = FALSE, echo=FALSE, fig.width=7, result='as.is', message=F, warning=F
+# Eval is turned off, no ZCTA's are in the data after dropping NA's from HOLC and filtering down to 80% coverage.
+# ZCTA is just not viable. Perhaps for CA with RASS data?
+ZCTA.list= list(
+  
+  feols(fml = OtherSubstandard ~ as.factor(GRADE.max) + MedIncome2018 + MedIncome1936 + Rent3739_Mean | STATEFP ,
+        data = ZCTA.int %>% dplyr::filter(share.max>.7 & !is.na(GRADE.max) & GRADE.max!='X') %>% st_set_geometry(NULL))   ,
+
+  
+  feols(fml = OtherSubstandard ~ as.factor(GRADE.max) +  MedIncome2018 + MedIncome1936 + Rent3739_Mean | STATEFP, 
+        data = ZCTA.int %>% dplyr::filter(share.max>.7  & GRADE.max!='X') %>% st_set_geometry(NULL))  
+  
+  # feols(fml = OtherSubstandard ~ as.factor(GRADE.max) +  MedIncome2018*MedIncome1936 + Rent3739_Mean + Black + White + Asian | STCO, 
+  #       data = ZCTA.int %>% dplyr::filter(share.max>.95 & GRADE.max!='X' ) %>% st_set_geometry(NULL)),
+  
+#  feols(fml = OtherSubstandard ~ as.factor(GRADE.max) +  MedIncome2018*MedIncome1936 + Rent3739_Mean + NBlack_YN + NBlack_PCT + Black + White + Asian | STCO, 
+  #      data = ZCTA.int %>% dplyr::filter(share.max>.8  & GRADE.max!='X') %>% st_set_geometry(NULL))  ,
+  
+#  feols(fml = OtherSubstandard ~ as.factor(GRADE.max) +  MedIncome2018*MedIncome1936 + Rent3739_Mean + NBlack_YN + NBlack_PCT + Black + White + Asian | STCO, 
+    #    data = ZCTA.int %>% dplyr::filter(share.max>.95 & GRADE.max!='X' ) %>% st_set_geometry(NULL))
+)
+
+modelsummary(models = ZCTA.list, se = 'cluster',
+             output = 'kableExtra',  # instead of latex so that I can use kable_styling(latex_options = 'scale_down') for the table
+             stars=TRUE, fmt='%.5f',
              notes = 'Robust SE clustered by FIPS county') %>%  # output as kableExtra
   kable_styling(latex_options = 'scale_down') # to use this kableExtra option!
 
+#' 
+#' ### Results using Zip Code Tabulation Area (ZCTA)
+#' 
+#' Zipcode Tabulation Areas are coarser than census blockgroups. Due to this, there are fewer ZCTAs that fall predominantly in one HOLC grade, resulting in a smaller sample size. Of the `r comma(NROW(unique(ZCTA.int$AFFGEOID10)))` zip codes that touch on one or more HOLC neighborhoods, `r ZCTA.int %>% st_set_geometry(NULL) %>% dplyr::filter(share.max>.8 & GRADE.max!='X' & !is.na(GRADE.max)) %>% distinct(AFFGEOID10) %>% count() %>% pull(n) %>% comma()` zip codes have greater than 80% within one HOLC grade. Of these, `r ZCTA.int %>% st_set_geometry(NULL) %>% dplyr::filter(GRADE.max=='D' & share.max>.8 & GRADE.max!='X' & !is.na(GRADE.max)) %>% distinct(AFFGEOID10) %>% count() %>% pull(n) %>% comma()` are Grade D (red). Of these, only `r ZCTA.int %>% st_set_geometry(NULL) %>% dplyr::filter(GRADE.max=='D' & share.max>.8 & GRADE.max!='X' & !is.na(GRADE.max) &!is.na(MedIncome1936) &  !is.na(Rent3739_Mean)) %>% distinct(AFFGEOID10) %>% count() %>% pull(n) %>% comma()` zip code(s) have HOLC survey data including median income, presence of minorities, and rent data for 1936-38. This precludes the use of zip code aggregations to estimate HOLC grading on current substandard heating fuel.
 
+#'
+#'
+#'
+#'
+#'### Household-level energy 
+#'
+#'
+#'
+#+ RASS-1, echo=F, cache=T, 
 
 
 

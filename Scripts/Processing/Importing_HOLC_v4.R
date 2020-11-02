@@ -562,14 +562,6 @@ HOLC = merge(x=HOLC, y=HOLC.dd[,c('polygon_id','NBlack_YN','NBlack_PCT','Rent35_
                                   'Minc_match','Repair_match','ExtraData')], by='polygon_id', all.x=T, all.y=F) %>% 
   replace_na(list(ExtraData = F))
 
-# WATTS.SG = c(7547, 7550) #polygon_id  # LA: map_id==16
-# xx = HOLC %>% dplyr::filter(map_id==16 & polygon_id %in% WATTS.SG)
-
-xx = HOLC %>% dplyr::filter(state=='MI') # dplyr::filter(map_id==69) #--> 68 is MD, which has lots of info digitized.
-ggplot(data=xx, aes(fill=GRADE)) + geom_sf() + scale_fill_manual(values = color.map)
-
-
-
 
 
 ######
@@ -582,8 +574,6 @@ HOLC = HOLC %>% st_join(FIPS %>% dplyr::select(STATEFP, COUNTYFP), largest=T) %>
   dplyr::mutate(STCO = paste0(STATEFP, COUNTYFP))
 
 # Save in list below with BG ZCTA full.
-
-
 
 
 ####---- Get BG and ZCTA data and shapefiles to intersect----####
@@ -654,23 +644,25 @@ BG = BG %>% dplyr::select(-contains(c('B250','B020','B190'))) %>%
   dplyr::mutate_at(.vars = vars(White:ThreeOrMore), ~ .x/TotalRace) 
 
 
-ZCTA = ZCTA %>% dplyr::select(-contains(c('B250','B020','B190'))) %>%
-  dplyr::mutate_at(.vars = vars(UtilityGas:NoFuel), ~ .x/TotalFuel ) %>%
+ZCTA = ZCTA %>% dplyr::select(-contains(c('B250','B020','B190'))) %>% dplyr::filter(TotalFuel>0) %>%
+  dplyr::mutate_at(.vars = vars(UtilityGas:NoFuel), ~ .x/TotalFuel ) %>% 
   dplyr::mutate_at(.vars = vars(White:ThreeOrMore), ~ .x/TotalRace) 
 
 
 BG = BG %>%
   dplyr::mutate(OtherRace = NativeAmerican+NativeHawaiian+OtherRaceOne+TwoOrMore+TwoOrMoreOther+ThreeOrMore) %>%
-  dplyr::mutate(OtherSubstandard = Coal + Wood + OtherFuel + NoFuel) %>%
+  dplyr::mutate(OtherSubstandard = Coal + Wood + OtherFuel + NoFuel,
+                OtherSubstandardWide = Coal + Wood + OtherFuel + LPGas + FuelOil + NoFuel) %>%
   dplyr::select(-Coal, -Wood, -OtherFuel, -NoFuel, -NativeAmerican, -NativeHawaiian, -OtherRaceOne, -TwoOrMore, -TwoOrMoreOther, -ThreeOrMore) %>%
-  dplyr::select(STATEFP:NAME.x, UtilityGas:Solar, OtherSubstandard, White:Asian, OtherRace, MedIncome2018, TotalFuel, TotalRace)
+  dplyr::select(STATEFP:NAME.x, UtilityGas:Solar, OtherSubstandard:OtherSubstandardWide, White:Asian, OtherRace, MedIncome2018, TotalFuel, TotalRace)
 
 
 ZCTA = ZCTA %>%
   dplyr::mutate(OtherRace = NativeAmerican+NativeHawaiian+OtherRaceOne+TwoOrMore+TwoOrMoreOther+ThreeOrMore) %>%
-  dplyr::mutate(OtherSubstandard = Coal + Wood + OtherFuel + NoFuel) %>%
+  dplyr::mutate(OtherSubstandard = Coal + Wood + OtherFuel + NoFuel,
+                OtherSubstandardWide = Coal + Wood + OtherFuel + LPGas + FuelOil + NoFuel) %>%
   dplyr::select(-Coal, -Wood, -OtherFuel, -NoFuel, -NativeAmerican, -NativeHawaiian, -OtherRaceOne, -TwoOrMore, -TwoOrMoreOther, -ThreeOrMore) %>%
-  dplyr::select(GEOID:NAME.zip, UtilityGas:Solar, OtherSubstandard, White:Asian, OtherRace, MedIncome2018, TotalFuel, TotalRace)
+  dplyr::select(GEOID:NAME.zip, UtilityGas:Solar, OtherSubstandard:OtherSubstandardWide, White:Asian, OtherRace, MedIncome2018, TotalFuel, TotalRace)
 
 
 
@@ -699,18 +691,27 @@ ZCTA = ZCTA %>%
 #                 Maj = shareArea>.80) %>%
 #   dplyr::arrange(AFFGEOID10, GRADE)
 
-BG.int.full = st_intersection(BG, HOLC) %>% 
+US = states(cb=TRUE) %>%
+  dplyr::filter(STUSPS!='AK') %>%
+  st_union() %>%
+  st_transform(st_crs(HOLC))
+
+rest.of.US = st_difference(US, HOLC %>% st_union()) %>%
+  st_sf() %>% # this lets me treat it as having data attached (without it, just st_difference, wasn't tibble)
+  dplyr::mutate(polygon_id = NA)
+
+HOLC.augmented = bind_rows(list(HOLC, rest.of.US))
+
+BG.int.full = st_intersection(BG, HOLC.augmented) %>% 
   dplyr::mutate(segmentArea = as.numeric(st_area(.))) %>%
   dplyr::arrange(AFFGEOID, GRADE)
 
-
-
-ZCTA.int.full = st_intersection(ZCTA, HOLC) %>%
+ZCTA.int.full = st_intersection(ZCTA, HOLC.augmented) %>%  #--> should this have an outside-of-HOLC polygon so that intersection captures zip's on the edge?
   dplyr::mutate(segmentArea = as.numeric(st_area(.))) %>%
   dplyr::arrange(AFFGEOID10, GRADE)
 
 
-saveRDS(list(BG.int.full, ZCTA.int.full, HOLC), file.path(WORK.OUT, paste0('BG_ZCTA_HOLC_int----',Sys.Date(),'.rds')))
+saveRDS(list(BG.int.full = BG.int.full, ZCTA.int.full = ZCTA.int.full, HOLC.int.full = HOLC), file.path(WORK.OUT, paste0('BG_ZCTA_HOLC_int----',Sys.Date(),'.rds')))
 
 
 
