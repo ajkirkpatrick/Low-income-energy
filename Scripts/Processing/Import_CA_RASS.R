@@ -107,7 +107,7 @@ CAzip.disagg  = st_intersection(CAzip %>% dplyr::mutate(ZIP_AREA = as.numeric(st
 
 
 ### Attempt at household-level HDD response estimation:
-e09.use = melt(RASS09e, id.vars = c('IDENT'), measure = patterns("^r","^d","^u","^hdd[0-9]+","^cdd[0-9]+"), value.name = c('r','d','u','hdd','cdd')) %>%
+e09.use = melt(RASS09e , id.vars = c('IDENT'), measure = patterns("^r","^d","^u","^hdd[0-9]+","^cdd[0-9]+"), value.name = c('r','d','u','hdd','cdd')) %>%
   dplyr::filter( !is.na(r) & !is.na(d) & !is.na(u)) %>%
   dplyr::mutate(r = mdy(r)) %>%
   dplyr::arrange(IDENT, variable, r) %>%
