@@ -1,0 +1,1062 @@
+---
+title: "Energy Insecurity and Redlined America"
+author: A. Justin Kirkpatrick
+output:
+  bookdown::pdf_document2:
+    toc: false
+    latex_engine: pdflatex
+    keep_tex: true
+    extra_dependencies: 
+      bbm: null
+      threeparttable: null
+      float: null
+      booktabs: null
+      caption: ["labelfont={bf}"]
+    citation_package: biblatex
+bibliography: "C:/Users/jkirk/OneDrive - Michigan State University/Bibtex Sync/Low Income Housing.bib"
+biblio-style: authoryear
+biblatexoptions: [backend=biber, natbib=true]
+link-citations: true
+colorlinks: true
+citecolor: blue
+linkcolor: blue
+urlcolor: blue
+# http://www.tug.org/applications/hyperref/manual.html
+
+---
+
+
+```{r setup1, echo = FALSE, warning=FALSE, error = FALSE, message = FALSE, cache = FALSE}
+require(rgdal)
+require(rgeos)
+require(sp)
+require(sf)
+require(mapview)
+require(stargazer)
+library(viridis)
+library(rvest)
+require(tidycensus)
+require(sp)
+require(rgdal)
+require(raster)
+require(tigris)
+require(snow)
+require(doSNOW)
+require(parallel)
+require(foreach)
+require(iterators)
+require(fixest)
+require(modelsummary)
+require(gtable)
+require(knitr)
+require(kableExtra)
+require(units)
+require(prettyunits)
+require(scales)
+require(DescTools)
+require(broom)
+require(here)
+options(tigris_use_cache = TRUE)
+
+knitr::opts_chunk$set(
+  out.width = '90%',
+  cache = TRUE,
+  echo = FALSE, 
+  warning=FALSE, 
+  message = F)
+
+knit_hooks$set(inline = function(x) {
+  prettyNum(x, big.mark=",")
+})
+
+cacheoption = TRUE
+```
+
+
+### Thanks: Heartland 2017, Brian Murray and NicInstitute
+
+# Introduction
+Energy insecurity has become a growing issue amongst policymakers. The energy insecurity literature shows evidence that low-income households frequently face
+excessive energy bills, despite their income limitations, that initially seem counter-intuitive
+\citep{Drehobl2016, Hernandez2013, Hernandez2010}. Poliycmakers have expressed concern not just that low-income
+households spend a larger share of income on energy services, a measure known as *energy burden*, but that low-income households are
+paying more to attain the *same* level of energy services relative to other income groups. The notion
+of this inequity in "energy access" - the ability to purchase energy services such as home heating or cooling - has
+been the object of programs that aim to improve residential energy efficiency through retrofits (CITE),
+or provide subsidies for newer, higher-efficiency appliances (CITE). As part of increasing concerns
+about income inequality, energy burdens and energy access inequity have become notable issues. This paper
+explores the role of historic housing discrimination known as "redlining" and its potential role
+in exacerbating energy access issues.
+
+That a high energy burden is common amongst low-income households is not surprising as energy burden is, 
+by definition, decreasing in income. In an analysis of US Census American Housing Survey data, \citet{Drehobl2016} find city-level median energy burdens
+of up to 12\%, with a 75th percentile as high as 26% in the least energy-efficient location, Memphis, TN. 
+The existence of retrofit programs and home heating assistance programs like LIHEAP show that policymakers view home heating as a necessity \citep{Stein2018b}. Evidence
+shows that inadequate home heating can cause or worsen existing medical issues (CITE), and
+can affect child development and achievement (Cook et al., 2008?). However, these programs can be
+expensive, suffer from economic dead weight loss due to poor targeting (CITE), under-deliver
+promised results (Fowlie et al.), can interact with environmental and environmental justice goals negatively by subsidizing consumption
+of energy (Levinson?), and are econommic "second best" to programs that successfully target the 
+source of the burden directly.
+
+A racial component exists even beyond income-based energy inequity. Even when controlling for poverty rates, \citet{Reames2016}
+finds that minority-dominated census block-groups and those block-groups with
+high measures of racial segregation also tend to have lower (worse) energy efficiency and 
+thus spend a greater total amount for the same level of energy services relative
+to non-minority households. Similarly, \citet{Drehobl2016} use American Housing Survey data to show that African-American and Latino households
+face higher median energy burdens, even conditional on income. hat is That is, even conditional on poverty or income, minority areas and households 
+have lower-efficiency housing stock relative to non-minority areas and households. Not only is energy insecurity an issue, but so too is this "energy inequity",
+which I define as "the disproportional incidence of energy insecurity in heavily-minority areas
+relative to non-minority areas of similar income." 
+
+This energy inequity is primarily attributable to the housing stock, which is less energy effcient in low income and minority neighborhoods. Previous work in this area has found negative correlations between energy efficiency and racial characteristics at the census block-group level (Reames, 2016b), and many have noted the disproportionate energy burden faced by low-income households. With tight budget constraints, low-income households are more likely to consume lower-priced housing. Naturally, lower priced housing stock will be deficient
+in some areas -- maintenance may be less frequent or non-existent, structural problems may plague the home, and the home may have un-remediated lead paint or asbestos. Similarly,
+it is more likely that the home is poorly insulated, has single-pane windows, and has dated, inefficient systems for heating and cooling. To the extent that these deficiencies are priced into the sale or rental price of the home and are known equally to all potential purchasers or renters, then they should affect the energy usage of all purchasers or renters with similar income equally. The racial disparities noted in Reames (2016b) are a particularly unexplained phenomena. 
+
+This brings about the questions central to this paper: First, is there evidence that racial differences in
+energy access exist once income and wealth are accounted for? Second, what drives the wedge between the energy
+efficiency of the housing stock available to (or chosen by) minorities and the energy efficiency of 
+the housing stock available to (or chosen by) non-minorities of similar economic status?
+
+This paper posits a hypothesis for one potential cause of this wedge and why it persists over time. 
+I propose that institutional discrimination in the 1930s-1970s forced African-Americans and other minorities into segregated "redlined" communities and, 
+over this period, the housing stock in these communities, though similar at one point in time, developed differently
+relative to the housing stock of non-redlined communities of similar socio-economic standing and demographic
+composition. This historical discrimination has persistent long-term effects on housing choices and housing quality
+that explains, at least in part, the energy inequity we observe today.
+
+To this end, I explore the extent to which
+minority households inside and near the historic "redlined" neighborhoods face energy inequity - that is, 
+the extent to which minority households pay a higher amount for the same
+level of energy services such as home heating relative to non-minorities of similar socio-economic status, which I do by 
+examining data on home energy consumption, race, and income. This requires careful attention to the nature of energy
+expenditures. High levels of energy expenditure may be a sign that a household values warm temperatures during Winter
+months and chooses to spend a larger share of income on home heating. High levels of energy expenditure may also be the result
+of households who choose a home with very low energy efficiency and who must spend a great
+deal simply to keep the interior temperature at a low but livable temperature. In short, one can spend a lot of money
+to heat to 75 degrees farenheit in an efficient home, and one can spend an identical amount of money heating to 60 degrees farenheit 
+in a very inefficient home. The two are observationally equivalent when examining only monthly bills and relative outside temperature.
+I disentangle these two by leveraging data from the California Residential Appliance Saturation Survey (RASS) which includes the consumer's reported thermostat setpoint,
+combined with a simple model of household energy consumption. The model allows me to separate unobserved characteristics of the household 
+from home heating efficiency, permitting unbiased estimation of a household's home heating response to cold-weather shocks. By focusing on
+the energy consumption response after controlling for the household's thermostat setpoint, I am able to measure the home's energy
+efficiency level, rather than the household's preference for indoor temperatures or direct constraints on budgets.
+
+Using original maps from the Homeowners Loan Corporation (HOLC) which designated "redlined" areas along with "yellow", "green" and "blue" areas
+in more than 170 cities in the US in 1933-39 (Figure \ref{fig:HOLC1}), 
+combined with RASS survey data from 2009, I test the hypothesis that areas designated Grade D (or "red"), which were considered "appropriate" for minorities to purchase homes, have more frequent substandard heating systems and are more inefficient in heating, evidenced by higher cost responses to cold weather shocks after controlling
+for thermostat setpoints. As noted by \citet{Fishback2020}, the HOLC maps did not randomly assign neighborhoods grades and therefore any current differences in 
+the simple mean of energy efficiency outcomes between areas of different grades should not be causally attributed to redlining policy. Specifically, areas of lower construction quality, lower rent, older and smaller homes, and areas with pre-existing minority populations in 1933-39 were more likely to be graded as "red." To address
+the potential for bias, I control for these observables by using original survey data recorded by HOLC surveyors in 1933-39 that established the
+justification for grading. Notably, there is considerable overlap in rents, the presence of minority populations, income, and other observables between "red" and "yellow"
+HOLC grades, leaving specific designation by the surveyor to be nearly random. Conditional on these observables and assuming that 
+unobserved differences correlated with HOLC grade do not still apply in the current period, then
+"red" grades are as good as randomly assigned. I use this conditionally as-good-as-random assignment to estimate causal effects of HOLC "redlining" on current
+energy inefficiency and energy inequity.
+
+```{r dispfig1, echo=F, cache=F, fig.align='center', out.width='90%', fig.cap = 'Example of a HOLC map (1933) showing neighborhood designations in Durham, NC. Red areas were designated "appropriate" for lending to minorities, while other areas were not. \\label{fig:HOLC1}'}
+
+knitr::include_graphics(here('Images','HOLC_example_1.png'))
+```
+
+This paper does not address the dynamics of residential sorting between 1933 and the current period. While the practice of "redlining" came to a statutory end
+with the Civil Rights Act of 1968, it was not until 1977's Community Reinvestment Act that lenders were required to detail the extent of their lending
+in all areas in which they operated, including in heavily-minority "redlined" neighborhoods. *De facto*, rather than *de jure* housing discrimination continued 
+well beyond that date, and still continues today, albeit in different ways (see \citet{Christensen2020}). In a housing
+market with no frictions and no discrimination, post-institutional redlining would have seen a re-sorting of households by preferences for housing stock. In
+this perfect case, observed differences in energy inequity would be the result of households sorting in to inefficient units, and housing prices adjusting to
+reflect the cost of heating. In effect, the most inefficient units would be rented by those who have little preference for warm tempertures. At the same time,
+poverty is known to be cyclic, and low-income populations that rely heavily on family and community may have, in effect, high fixed costs of moving outside of a neighborhood. For young families especially, remaining close to (grand)parents may necessitate remaining in the same neighborhood for multiple generations. To the extent that a policy in place through 1977 "fixed" a family's location by precluding moves to other areas with better housing stock, the same families may face high costs of moving today resulting in a modern *hysteresis* effect in redlined areas today. A full sorting model of residential choice is beyond this paper, though not infeasible under the right data circumstances.
+
+This paper contributes to two separate literatures. The first literature 
+is the body of work that examines the role of historic discriminatory economic policies on 
+current outcomes. In this area, this paper is most similar to Aaronson and Mazumder (???), which specifically examines the effect of HOLC redlining on credit and home ownership, Aaronson and Mazumder use a boundary difference-in-differences to show that households located inside HOLC redlined areas had less access to credit and were less likely to own their home relative to similar households located just outside the boundary. That striking result motivates this paper -- one of the mechanisms by which energy inequity can manifest is through declining investment in available housing stock either by owner-occupants or by absentee landlords. Energy inequity is, at least in theory, a direct result of the effect shown by Aaronson and Mazumder. 
+
+The second literature 
+examines household electricity consumption responses to temperature or price shocks in the context of energy expenditures. 
+Largely motivated by the need to accurately predict future electricity consumption under future prices, demographics, or climate (Ang. and Auffhamer 2009), 
+these studies have examined the consumption response to varying temperature or prices. Few, however,
+have incorporated a model of consumption that allows for endogenous preferences for thermostat setpoints. An exception is Brewer (2019), who estimates a "bliss point"
+in a structural model of joint residence and thermostat setpoint choice, though this paper examines moral hazard in landlord-paid heating. 
+The paper most similar to this is Doremus, Jacqz, and Johnston (2020), who examine household energy consumption expenditures in response to variation in temperature
+by income. However, the authors similarly do not allow for endogenous thermostat setpoints that reflect unobserved tastes. 
+
+Section 2 defines energy inequity and introduces a simple model of home heating costs. It further shows how unobserved home efficiency characteristics, 
+which may vary between redlined and non-redlined neighborhoods when historic housing discrimination still impacts current energy burdens,  
+can be estimated from energy consmption data with a known thermostat setpoint. Section 3 introduces the data. 
+Section 4 discusses the estimation strategy. Section 5 presents results and Section 6 concludes.
+
+
+Some citations: Aroonreuengsawat and Auffhammer: reponse to weather shocks, but does not endogenize the thermostat setpoint
+Levinson 2013 (JEBO) on building codes: not using thermostats, just decomposing aggregate (state, region) decrease in PerCap energy by demos, moving, buildings, etc. Does use RECS, but only to get CA and NON-CA HDD responses (no thermostat)
+Chong 2013: estimates response but no thermostat
+
+
+
+# Energy Inequity and Housing Discrimination
+## The Energy Burden and Energy Inequity
+
+Energy burden is defined as the share of total household income spent on energy purchases not including transport. The low-income
+energy burden is the noted phenomenon where low-income households have a disproportionate likelihood of having a high proportion
+of household income devoted to energy purchases \cite{Byrne1986, Baxter1998}. In practice, energy burdens above 10\% are worrisome,
+and many households have burdens of 20% or more \cite{Baxter1998}. Middle and upper-income households tend to spend 5\% or less of 
+household income on energy services \cite{Hernandez2010}. High energy burden indicates an inability to afford
+basic energy services (heating, refrigeration), particularly during periods of volatility in energy prices. High prices
+or high volatility can lead to a "heat or eat" scenario \cite{HeatOrEat2003} where households must trade
+off between heating and other necessities.
+
+
+#### Conditional on income, problem still persists!
+Energy inequity can be defined as the gap between the cost to obtain a set level of energy services for a minority household
+relative to a non-minority household of equal socioeconomic status and means. In earlier work, \cite{Reames2016} finds that minority-dominated census blocks and those with higher levels of racial segregation have higher heating costs per square foot, even conditional on income, and example of energy inequity. Energy services more broadly can be defined as
+adequate lighting, heating, cooling, refrigeration, and sanitation. In this paper, I use home heating as the primary
+energy serice discussed. The definition of energy inequity acknowledges that different households may have income-based differences in the selection of housing that lead to differences in the cost of energy services. Even beyond income-based constraints, heterogeneous preferences correlated
+with race or ethnicity may still drive differences in total energy expenditures as households with preference for 
+warmer temperatures may forego other expenses in order to maintain a warmer home. By measuring the cost
+to households to obtain a common level of energy services, rather than their oberved level, the measure accounts for these differences. Remaining, unexplained differences by race amongst households with similar socioeconomic statuses signify energy inequity. 
+
+
+#### Cite severity of problem
+Ramifications of insufficient heating with citations....
+
+I focus on heating primarily because home heating represents the largest share of home energy consumption \cite{EIARECS2015} (2015 Residential Energy Consumption Survey: Energy Consumption and Expenditures Tables CE3.1). Furthermore, it is the energy expense that is most subject to heterogeneity across housing stock. The cost of heating is a function of three main inputs: the temperature setpoint relative to the outdoor temperature, the quality of the "building envelope" (e.g. the presence of dual-pane windows or insulation), and the efficeincy of the heating source. The latter is affected by the type of fuel used. In general, substandard fuels like coal are highly inefficient. For fossil fueled heating systems like liquified petroleum gas (LP gas) or fuel oil, unit efficiency has improved over the last 30 years, and newer systems can be efficient. In the case of LP gas and fuel oil, however, cost tends to be higher \cite{EIARECS2015}, and systems require frequent delivery from distributers and storage on-site which tends to increase expense. Natural gas prices have declined since the early 2010's for most of the US, and efficiency of natural gas units has improved. Electric heat is not uncommon in much of the US, and the average expenditure for heating by electric is lower than fuel oil or LP gas, but higher than natural gas for most of the US \citep{EIARECS2015} (Table CE3.6). Electric furnaces and, more recenly, heat pumps have become more efficient. Overall, the cost per unit of energy for heat is higher for LP gas, fuel oil, and coal, lower for electricity and natural gas, and nearly always higher for older heating sources. This leads to two expectations: first, that households with no or substandard heating sources like coal will pay more to obtain the same level of heating than would households with natural gas or electric heat. Second, that households with older heating sources will pay more to obtain the same level of heating than would households with natural gas or electric heat.
+
+#### Role of Redlining in Modern Energy Inequity
+Home efficiency, by definition, plays a large role in driving energy inequity, both through efficiency and age of heating equipment, and through building envelope integrity (drafts and leaks) and insulation. But what drives racial variation in home efficiency? Budget constraints may require a household to choose a less efficient house when on the purchase or rental market, but amongst households with the same socioeconomic status and budget constraint, the racial difference in efficiency implied by the energy inequity problem is not readily explained. This paper turns to a feature of US housing and credit policy known as "redlining" to provide a potential explanation for the racial energy inequity problem. 
+
+#### Redlining was...
+Describe HOLC in depth here.
+
+#### Causal chain is really long
+The relationship between current energy inequity and past redlining policies rests on three features of the housing market over the last 90 years:
+
+First, the designation of "hazardous" lending areas (redlined areas) was a separating event that divided neighborhoods, including those with similar characteristics, along a policy-created line. A great deal of overlap in observable characteristics is observed between "red" and "yellow" areas, including comparable rent levels in 1933-1939, comparable racial compositions, and comparable quality of construction. Redlining specific neighborhoods provided a focus that organized the dynamics of housing and segregation. There is debate as to how formalized the HOLC maps were in bank lending decisions \citep{Hillier2003, Fishback2020}. Prior work has shown that redlined areas had historically higher interest rates for loans \citep{Hillier2003}, and this differential access to credit had widespread causal impacts on home ownership rates, home values, and subsequent disinvestment \citep{Aaronson2021}. Even absent a *de jure* enforcement mechanism, the HOLC maps could have the same effect if the designations on the map lead to racial sorting of whites into non-red areas, and thus African-Americans into redlined areas. One testable implication of this "separaing event" is to test the rate of growth and in-migration of African-American households to "red" areas relative to those of observably similar "yellow" areas.
+
+Second, the sorting of populations either through enforced lending practices or through informal *de facto* segregation led to a divergence in the economic conditions, including credit access, within the redlined areas. As housing in "red" areas aged, stricter credit constraints and a lack of lending throughout the years resulted in a decline in the quality of homes and local disinvestment \citep{Aaronson2021}. This paper extends the findings of \citet{Aaronson2021} regarding credit access to the energy efficiency of the housing stock present in the redlined areas and tests for evidence of this divergence.
+
+Third, even with the end of *de jure* segregation across redlining and non-redlined areas, substantial costs to moving outside of a neighborhood still exist for those in a redlined area, imposing difficulty on those who seek more energy efficient housing. A number of sources of unobserved moving costs can by hypothesized. In particular, proximity to family who can assist with child-rearing is a particular (opportunity) cost imposed when moving to a new area. For families at or near the poverty line, grandparents or great-grandparents may provide childcare or meals for children when parents are working or otherwise unable to provide. Thus, the cost of moving to a different area with higher-quality and more efficient housing stock -- an area not negatively affected by years of disinvestment and ill repair -- may outweigh the potential benefits. Notably, in this situation, the prior effect of redlining policy maintains a *hysteresis* effect on current energy burdens and energy inequity. In the absence of the HOLC maps and concordant redlining, this effect would not be present.
+
+This paper does not fully model the causal chain of effect from 1933 to 2021. To address the first feature, I carefully test for observable differences between redlined and "yellow" HOLC grades. Results show that grade is influenced by the presence of African-Americans, but substantial overlap in characteristics between "red" and "yellow" neighborhoods exists. I leverage the overlap in observable characteristics that, I argue in subequent sections, provides as-good-as-random assignment of red grades. I also test for changes in rate of growth in "red" versus "yellow" neighborhoods of similar initial composition which provides support for the the first feature. The second feature is directly tested in this paper in the context of home heating fuel and home heating efficiency. Tests for consistency with the third feature are included, but no definite or causal claim is made or implied. It is likely that the data necessary to do so in the context of energy efficiency and the energy inequity problem does not exist -- electricity billing data at the address level is not available at large scale for any period prior to the 2000's. 
+
+## This paper here...
+
+#### Explores the role of redlining in explaining energy burden
+By isolating the energy outcomes that can only be explained by redlining
+
+#### Plausibly exogenous variation
+Conditional on similar (but not red-lined) nearby neighborhoods. Observables.
+
+#### Extracted 1930's data to understand redlining
+Survey data created by federal HOLC employees in 1936-1939 provides neighborhood-specific data on observable characteristics that can be used to identify the effects of redlining. The designation of red-  yellow-lined areas (as well as green and blue) aggregate away important variation between each grading. Not all redlined areas are identical, nor are all yellow areas. Survey data recorded as part of  redline designation process provides important, but largely unusued, sources of variation. Within-grade variation in housing is common with reported average rents, median income, repair status of sing, share of housing developed, and construction type. Prior to being redlined, areas with high percentages of low-income or minority populations were more likely to have lower rents and lower housing lity. Frequently, the reason for a low-income or minority area's location was associated with the quality of the geography or proximity to natural features - low-lying areas that frequently flooded or as too steep for conventional building were generally populated by lower-income individuals. These same features also foment low investment in housing stock, and can explain current inefficiencies in  sing regardless of the HOLC grade. With HOLC survey data in hand, I can control for these features and separate out the effect of HOLC redlining from the determinants of HOLC grading.
+
+#### Identification key: there are neighborhoods with identical economics and racial composition where some surveyors designated them red and some designated yellow.
+
+#### Poor whites vs. poor blacks
+
+#### Historic data merged to block groups to leverage modern outcomes
+
+### Homeowners Loan Corporation (HOLC) Grades
+The Homeowners Loan Corporation maps were generated by federal surveyors who were comissioned as part of a New Deal-era home mortgage refinancing and underwriting program intended to aid the residential real estate market during the Great Depression. The federal government, aiming to underwrite thousands of distressed mortgages thought partnerships with a new federal lending source and local banks, used the collected data to determine the risk of underwriting at a neighborhood level. Because of the need for fine spatial granularity, the spatial extent of the average "neighborhood" is around 1.1 square kilometers and contains around 15-50 residential blocks. Commercial and industrial areas and corridors are excluded. Data was collected approximately 1933-1939.
+
+The surveyors mapped neighborhoods and collected data pertaining to their designation. Each neighborhood was designated in one of four ways:
+
+\begin{itemize}
+\item[A] "Best (Lending Area)" (Green)
+\item[B] "Still Desirable" (Blue)
+\item[C] "Definitely Declining" (Yellow)
+\item[D] "Hazardous" (Red)
+\end{itemize}
+
+Designations were not necessarily fixed by any particular characteristic and no national standard appears to exist. While popular culture thinks of "redlining" as specifically racial, grading was influenced by the presence of African-American families, but was not purely derived from this information. The primary data collected on the survey is the racial composition of the neighborhood, the presence of "subversive minorities," the African-American share\footnote{The surveyors do not use the term African-American} of the population, the type and condition of construction, rent and sale prices for the survey year, the professions of the residents, and the presence of "relief" families. Professions are noted in the surveys primarily because the location of residence within a city was largely determined by employment location and wage/job. Near a factory, one would often see a neighborhood for "manual laborers", another for management, and another for clerks and office-workers. When designating neighborhood grades, individual surveyors relied on relative populations and local context in setting grades rather than a national standard. This results in overlap in grading that can be leveraged to identify effects of interest. For instance, in downtown Detroit, there are neighborhoods where areas with 0\% African-American populations receive "red" grades (see: D37) yet adjacent neighborhoods with 20\% African-American populations receive "yellow" grades (see: C50). 
+
+To assess current energy outcomes, I merge original HOLC neighborhoods to modern census block groups, extracting ACS and census indicators of high energy burden. Census block groups match the granularity HOLC neighborhoods reasonably well. However, boundaries do not tend to coincide exactly, requiring some aggregation.  Once linked, I compare modern energy outcomes with HOLC grading, conditioning on ervable characteristics both in the 1930's (selection), and in the present. While an individual household-level analysis would provide the clearest evidence, household-level energy consumption data is ited for privacy reasons, especially at the spatial resolution of HOLC neighborhoods, which can have as few as 100 homes in them.
+
+
+## Empirical Strategy
+
+```{r process-1, echo=FALSE, cache = TRUE, warning=F, message=F}
+    
+
+    # Load files --------------------------------------------------------------
+    WORK.OUT = file.path(BASE,'ajk41/Low Income Energy/Data/OUTPUT',Sys.Date())
+    dir.create(WORK.OUT, recursive=T)
+    
+    Processed_HOLC = file.path(BASE, 'ajk41/Low Income Energy/Data/Zillow/Processed_HOLC')
+    
+    # mykey = "ff90006e6d5f1960ef3bbb37579766bb563b1121"
+    # census_api_key(mykey, install=T)
+    
+    BGZ = readRDS(jLoad(WORK.OUT, 'BG_ZCTA_HOLC_int'))
+    BG.int.full = BGZ[[1]]
+    ZCTA.int.full = BGZ[[2]]
+    HOLC = BGZ[[3]] # readRDS(jLoad(WORK.OUT, 'HOLC_with_data')) # 10-12
+    
+    # Set in Importing_HOLC_v4.R:
+    #  dplyr::mutate(OtherSubstandard = Coal + Wood + LPGas + OtherFuel + NoFuel,
+    #    OtherSubstandardNarrow = Coal + NoFuel,
+    #    OtherSubstandardMed = Coal + LPGas + FuelOil + OtherFuel + NoFuel,
+    #    OtherSubstandardWide = Coal + Wood + OtherFuel + LPGas + FuelOil + NoFuel) %>%
+         
+        
+    
+    # Dissolve to BG with data on share in each GRADE ---------
+    # Summarize (dissolve) BG and ZCTAs and average HOLC-data within.
+    #         - Hopefully a reasonable number of ~100% in A,B,C,or D.
+    BG.int = BG.int.full %>% 
+      group_by_at(vars(AFFGEOID, TRACTCE, BLKGRPCE, UtilityGas:TotalRace)) %>%   # see https://github.com/r-spatial/sf/wiki/migrating
+      summarize(NBlack_YN = max(NBlack_YN, na.rm=T),
+                NBlack_PCT = weighted.mean(as.numeric(NBlack_PCT), w = segmentArea, na.rm=T),
+                Rent35_Mean = weighted.mean(Rent35_Mean, w=segmentArea, na.rm=T), 
+                Rent3739_Mean = weighted.mean(Rent3739_Mean, w = segmentArea, na.rm=T), 
+                Minc = weighted.mean(Minc, w=segmentArea, na.rm=T),
+                GRADE.A  = sum(segmentArea[GRADE=='A'], na.rm=T)/sum(segmentArea),
+                GRADE.B  = sum(segmentArea[GRADE=='B'], na.rm=T)/sum(segmentArea),
+                GRADE.C  = sum(segmentArea[GRADE=='C'], na.rm=T)/sum(segmentArea),
+                GRADE.D  = sum(segmentArea[GRADE=='D'], na.rm=T)/sum(segmentArea),
+                GRADE.NA = sum(segmentArea[is.na(GRADE)], na.rm=T)/sum(segmentArea),
+                GRADE.max = replace_na(GRADE[which.max(segmentArea)], 'X'),
+                share.max = max(segmentArea, na.rm=T)/sum(segmentArea)) %>% # Note: check that no AFFGEOID are duplicated
+      dplyr::mutate(STATEFP = gsub(pattern = '.*US([0-9]{2})([0-9]{3}).*', '\\1', x=AFFGEOID),
+                    COUNTYFP = gsub(pattern = '.*US([0-9]{2})([0-9]{3}).*', '\\2', x=AFFGEOID),
+                    STCO =     gsub(pattern = '.*US([0-9]{5}).*', '\\1', x=AFFGEOID)) %>%
+      dplyr::mutate(isD = GRADE.D>.8,
+                    GRADE.max = factor(GRADE.max, levels = c('C','D','B','A','X')),
+                    MedIncome1936 = Minc/1000,
+                    MedIncome2018 = MedIncome2018/1000) %>%
+      dplyr::mutate(NBlack_YN = case_when(
+        !is.finite(NBlack_YN)|is.na(NBlack_YN) ~ as.logical(NA),
+        NBlack_YN>=1 ~ TRUE,
+        NBlack_YN<1 ~ FALSE,
+        TRUE ~ NA),
+        NBlack_PCT = case_when(
+          !is.finite(NBlack_PCT)|is.na(NBlack_PCT) ~ as.numeric(NA),
+          NBlack_PCT>100 ~ NBlack_PCT/10,
+          NBlack_PCT>=0 ~ NBlack_PCT) )
+      
+      
+    
+    
+    ZCTA.int = ZCTA.int.full %>% dplyr::filter(TotalFuel>0) %>%
+      group_by_at(vars(AFFGEOID10, NAME.zip, UtilityGas:TotalRace)) %>%
+      summarize(NBlack_YN = max(NBlack_YN, na.rm=T), 
+                NBlack_PCT = weighted.mean(as.numeric(NBlack_PCT), w = segmentArea, na.rm=T),
+                Rent35_Mean = weighted.mean(Rent35_Mean, w=segmentArea, na.rm=T), 
+                Rent3739_Mean = weighted.mean(Rent3739_Mean, w = segmentArea, na.rm=T), 
+                Minc = weighted.mean(Minc, w=segmentArea, na.rm=T),
+                GRADE.A   = sum(segmentArea[GRADE=='A'], na.rm=T)/sum(segmentArea),
+                GRADE.B   = sum(segmentArea[GRADE=='B'], na.rm=T)/sum(segmentArea),
+                GRADE.C   = sum(segmentArea[GRADE=='C'], na.rm=T)/sum(segmentArea),
+                GRADE.D   = sum(segmentArea[GRADE=='D'], na.rm=T)/sum(segmentArea),
+                GRADE.NA  = sum(segmentArea[is.na(GRADE)], na.rm=T)/sum(segmentArea),
+                GRADE.max = replace_na(GRADE[which.max(segmentArea)], 'X'),
+                share.max = max(segmentArea, na.rm=T)/sum(segmentArea)) %>% # Note: check that no AFFGEOID are duplicated
+      st_join(counties(cb=TRUE) %>% dplyr::select(STCO = GEOID) %>% st_transform(st_crs(HOLC)), largest=TRUE) %>%
+      dplyr::mutate(STATEFP = substr(x=STCO, start=1, stop=2),
+                    COUNTYFP = substr(x = STCO, start = 3, stop=5),
+                    isD = GRADE.D>.8,
+                    GRADE.max = factor(GRADE.max, levels = c('C','D','B','A','X')),
+                    MedIncome1936 = Minc/1000,
+                    MedIncome2018 = MedIncome2018/1000,
+                    zip = as.character(sapply(strsplit(NAME.zip, ' '), '[', 2))) %>%
+      dplyr::mutate(NBlack_YN = case_when(
+        !is.finite(NBlack_YN)|is.na(NBlack_YN) ~ as.logical(NA),
+        NBlack_YN>=1 ~ TRUE,
+        NBlack_YN<1 ~ FALSE,
+        TRUE ~ NA),
+        NBlack_PCT = case_when(
+          !is.finite(NBlack_PCT)|is.na(NBlack_PCT) ~ as.numeric(NA),
+          NBlack_PCT>100 ~ NBlack_PCT/10,
+          NBlack_PCT>=0 ~ NBlack_PCT) )
+    
+    
+    # stopifnot(sum(duplicated(ZCTA.int$AFFGEOID10))==0)
+    stopifnot(sum(duplicated(BG.int$AFFGEOID))==0)
+    stopifnot(sum(duplicated(ZCTA.int$AFFGEOID10))==0)
+```
+    
+    
+    
+```{r process-2, echo=FALSE, cache = TRUE, warning=F, message=F}
+    
+    #### Import RASS data ####
+    RASS09e = fread(file.path(BASE, 'ajk41','Low Income Energy','Data','CA RASS','CA RASS 2009','ddn_electricbillingdatamodels.csv'), na.strings = c('99')) #?97
+    RASS09g = fread(file.path(BASE, 'ajk41','Low Income Energy','Data','CA RASS','CA RASS 2009','ddn_gasbillingdatamodels.csv'), na.strings = c('99'))
+    RASS09s = fread(file.path(BASE, 'ajk41','Low Income Energy','Data','CA RASS','CA RASS 2009','Survdata.csv'), na.strings = c('99'))
+    
+    RASS19s = fread(file.path(BASE, 'ajk41','Low Income Energy','Data','CA RASS','CA RASS 2019','Final19_SW_CleanedSurvey.csv'), na.strings = c('99'))
+    
+    #### Survey data (one obs. per household)
+    s09 = RASS09s[,.(IDENT, servzip, avginc, homeage, HOHETH, EDUC, EUTIL, NGUTIL, CZT24, HMRNSET, HDAYSET, HEVNSET, HNITESET,
+                     NAC_KWH, NAC_Therms, res, rescnt, kids, adults, seniors, NGSERV, OWNRENT, YRS_RES, BUILTYR, 
+                     SQFT, PAYHEAT, PHTNGCNT, PHTNGFWL, PHTNGRAD, PHTNGFP, PHTNGOTH, PHTELBSB, PHTELCRH, PHTELCHP, 
+                     PHTELWHP, PHTELPOR, PHTELOTH, PHTBGCNT)][,c('zip','wave','ethnicity'):=list(sprintf('%05d', servzip), 2009,
+                                                                                                 factor(HOHETH, levels = c(1:7),
+                                                                                                        labels = c('Native American','Asian and Pacific Islander',
+                                                                                                                   'Black','Hispanic','White','Other','Mixed')))]
+    
+    s19 = RASS19s[,.(IDENT, servzip, avginc, homeage, HOHETH, EDUC, EUTIL = eutil, NGUTIL, CZT24, HMRNSET, HDAYSET, HEVNSET, HNITESET,
+                     NAC_KWH, NAC_Therms, res, rescnt, kids, adults, seniors, NGSERV, OWNRENT, YRS_RES, BUILTYR, 
+                     SQFT, PAYHEAT, PHTNGCNT, PHTNGFWL, PHTNGRAD, PHTNGFP, PHTNGOTH, PHTELBSB, PHTELCRH, PHTELCHP, 
+                     PHTELWHP, PHTELPOR, PHTELOTH, PHTBGCNT)][,c('zip','wave','ethnicity'):=list(sprintf('%05d', servzip), 2019,
+                                                                                                 factor(HOHETH, levels = c(1:7, 97),
+                                                                                                        labels = c('Native American','Asian Pacific Islander',
+                                                                                                                   'Black','Hispanic','White','Other','Mixed',
+                                                                                                                   'No Answer')))]
+    
+    
+    #### Consumption data (nest to IDENT)
+    e09.use = melt(RASS09e , id.vars = c('IDENT'), measure = patterns("^r","^d","^u","^hdd[0-9]+","^cdd[0-9]+"), value.name = c('r','d','u','hdd','cdd')) %>%
+      dplyr::filter( !is.na(r) & !is.na(d) & !is.na(u)) %>%
+      dplyr::mutate(r = mdy(r),
+                    u = as.numeric(gsub(',','',u))) %>%
+      dplyr::filter(!is.na(u) & !is.na(hdd) & !is.na(cdd)) %>%
+      dplyr::arrange(IDENT, variable, r) %>%
+      dplyr::select(IDENT, r, d, hdd, cdd, u) %>%
+      group_by(IDENT) %>% dplyr::filter(n()>1 & sd(u)>0) %>%
+      nest(edata = -IDENT)
+      
+    
+    g09.use = melt(RASS09g , id.vars = c('IDENT'), measure = patterns("^r","^d","^u","^hdd[0-9]+","^cdd[0-9]+"), value.name = c('r','d','u','hdd','cdd')) %>%
+      dplyr::filter( !is.na(r) & !is.na(d) & !is.na(u) & d>=0) %>%
+      dplyr::mutate(r = mdy(r),
+                    u = as.numeric(gsub(',','',u))) %>%
+      dplyr::filter(!is.na(u) & !is.na(hdd) & !is.na(cdd)) %>%
+      dplyr::arrange(IDENT, variable, r) %>%
+      dplyr::select(IDENT, r, d, hdd, cdd, u) %>%
+      group_by(IDENT) %>% dplyr::filter(n()>1 & sd(u)>0) %>%
+      nest(gdata = -IDENT)
+    
+    
+    ### Household-level CDD and HDD responses in electricity and gas:
+    e09.use  = e09.use %>%
+      dplyr::mutate(coefrun = map(edata, ~feols(u ~ hdd + cdd, weights=.$d, data = ., warn=F, notes = F) %>%
+                                    tidy() %>%
+                                    dplyr::select(term, estimate) %>%
+                                    spread(term, estimate))) %>%
+      unnest(coefrun) %>%
+      dplyr::select(IDENT, intercept.e = `(Intercept)`, cdd.e = cdd, hdd.e = hdd, edata) %>%  ungroup() %>%
+      dplyr::mutate_at(.vars = vars(intercept.e:hdd.e), .funs = ~ Winsorize(., probs=c(.02, .98), na.rm=T))
+    
+    g09.use  = g09.use %>%
+      dplyr::mutate(coefrun = map(gdata, ~feols(u ~ hdd + cdd, weights=.$d, data = ., warn = F, notes = F) %>%
+                                    tidy() %>%
+                                    dplyr::select(term, estimate) %>%
+                                    spread(term, estimate))) %>%
+      unnest(coefrun) %>%
+      dplyr::select(IDENT, intercept.g = `(Intercept)`, cdd.g = cdd, hdd.g = hdd, gdata) %>% ungroup() %>%
+      dplyr::mutate_at(.vars = vars(intercept.g:hdd.g), .funs = ~ Winsorize(., probs=c(.02, .98), na.rm=T))
+    
+    
+    all09.use =  inner_join(s09, full_join(e09.use, g09.use, by=c('IDENT')), by='IDENT')
+    # avginc,
+    # cdd.e -> coef response to cooling degree days (should be positive); 
+    # cdd.g -> coef response to cooling degree days (should be negative or zero)
+    # hdd.e -> coef response to heating degree days (should be positive esp if e heat)
+    # hdd.g -> coef response to heating degree days (should be very positive)
+    
+    #--> CAZ: one record per zip code (283 zips). Each record has census (race, income TotalFuel etc.) plus HOLC (aggregated NBlack, Rent, etc.) and share of GRADE
+    ##        Plus GRADE.max and share.max.
+    ##        adata has household RASS responses, and those have in them gdata and edata
+    CAZ = ZCTA.int %>% 
+      st_set_geometry(NULL) %>% as_tibble() %>% 
+      inner_join(as_tibble(all09.use) %>% group_by(zip) %>% nest(adata = -(zip)), by='zip') %>%
+      dplyr::mutate(zipcount = map_int(adata, .f = ~ NROW(.)))
+    
+    ##--> CAS: unnested version of CAZ without a/e/gdata, with one row per household and Hh level (not consumption) data.
+    ##         For household fuel source regressions.
+    CAS = ZCTA.int %>% 
+      st_set_geometry(NULL) %>% as_tibble() %>% 
+      inner_join(bind_rows(s09, s19), by='zip')
+```
+                 
+
+### Home heating fuel
+To estimate the impact of redlining on current energy outcomes, I focus on two main measures: the share of homes within a census block-group that report substandard heating fuel of either \textit{coal} or \textit{none}, and the energy consumption response of households. I first examine the prevalance of substandard heating fuel. Households with substandard heating fuel face the highest cost for home heating. I estimate the following regression:
+
+\begin{eqnarray}
+PercentSubstandard_{b} = \beta_0 + \sum_{g=1}^4 \beta_{g}^{Grade} +  \beta \mathbf{X}_b + \beta_{county} County_b + \epsilon_{b} \label{mainSubtandard1}
+\end{eqnarray}
+
+```{r substandard-est-2, echo=FALSE, fig.width=7, result='as.is', message=F, warning=F, cache = TRUE}
+    
+      # With OthersubstandardNarrow #
+    BG.list1 = list(
+      
+      feols(fml = OtherSubstandardNarrow ~ as.factor(GRADE.max) + MedIncome2018 + MedIncome1936 + Rent3739_Mean | STCO,
+                      data = BG.int %>% dplyr::filter(share.max>.8 & !is.na(GRADE.max) & GRADE.max!='X') %>% st_set_geometry(NULL)),
+        
+      feols(fml = OtherSubstandardNarrow ~ as.factor(GRADE.max) + MedIncome2018*MedIncome1936 + Rent3739_Mean | STCO,
+                      data = BG.int %>% dplyr::filter(share.max>.8 & !is.na(GRADE.max) & GRADE.max!='X') %>% st_set_geometry(NULL))  ,  
+        
+      feols(fml = OtherSubstandardNarrow ~ as.factor(GRADE.max) + MedIncome2018*MedIncome1936 + Rent3739_Mean | STCO,
+                  data = BG.int %>% dplyr::filter(share.max>.95 & !is.na(GRADE.max) & GRADE.max!='X') %>% st_set_geometry(NULL)),
+    
+      feols(fml = OtherSubstandardNarrow ~ as.factor(GRADE.max) +  MedIncome2018*MedIncome1936 + Rent3739_Mean + Black + White + Asian | STCO, 
+                  data = BG.int %>% dplyr::filter(share.max>.8  & GRADE.max!='X') %>% st_set_geometry(NULL))  ,
+      
+      feols(fml = OtherSubstandardNarrow ~ as.factor(GRADE.max) +  MedIncome2018*MedIncome1936 + Rent3739_Mean + Black*as.factor(GRADE.max) + White + Asian | STCO, 
+            data = BG.int %>% dplyr::filter(share.max>.8  & GRADE.max!='X') %>% st_set_geometry(NULL))  ,
+      
+      feols(fml = OtherSubstandardNarrow ~ as.factor(GRADE.max) +  MedIncome2018*MedIncome1936 + Rent3739_Mean + Black + White + Asian | STCO, 
+                  data = BG.int %>% dplyr::filter(share.max>.95 & GRADE.max!='X' ) %>% st_set_geometry(NULL)),
+      
+      feols(fml = OtherSubstandardNarrow ~ as.factor(GRADE.max) +  MedIncome2018*MedIncome1936 + Rent3739_Mean + NBlack_YN + NBlack_PCT + Black + White + Asian | STCO, 
+                  data = BG.int %>% dplyr::filter(share.max>.8  & GRADE.max!='X') %>% st_set_geometry(NULL))  ,
+      
+      feols(fml = OtherSubstandardNarrow ~ as.factor(GRADE.max) +  MedIncome2018*MedIncome1936 + Rent3739_Mean + NBlack_YN + NBlack_PCT + Black + White + Asian | STCO, 
+                  data = BG.int %>% dplyr::filter(share.max>.95 & GRADE.max!='X' ) %>% st_set_geometry(NULL))
+    )
+    
+    modelsummary(models = BG.list1, se = 'cluster',
+                 output = 'kableExtra',  # instead of latex so that I can use kable_styling(latex_options = 'scale_down') for the table
+                 stars=TRUE, fmt = '%.5f',
+                 add_rows = tibble::tribble(~term, ~one, ~two, ~three, ~f, ~fi, ~si, ~se, ~ei,
+                                            'Block-Group HOLC Grade Threshold', '80%','80%', '95%', '80%', '80%', '95%', '80%', '95%'),
+                 title = 'Share of Households with Substandard Fuel (Coal and None) by HOLC Grade\\label{tab:substandardnarrow1}',
+                 notes = list('Robust SE clustered by FIPS county')) %>%  # output as kableExtra
+      kable_styling(latex_options = 'scale_down') # to use this kableExtra option!
+```
+
+
+
+
+Where \textit{PercentSubstandard} is the census block-group share of households reporting substandard home heating fuel. $\beta_{g=red}^{Grade}$ is the coefficient of interest which measures the difference in share of substandard heating fuel relative to the base category, which is "yellow" (Grade C). $\mathbf{X}_b$ are controls for 2018 characteristics including median income and, in some specifications, racial composition. $\mathbf{X}_b$ also contains controls for characteristics from 1936-39 including median income, average rent, and racial characteristics. By including these historic characteristics, I control for the endogenous selection of some neighborhoods into the HOLC "red" grade. To the extent that undesirable characteristics made a neighborhood more likely to be graded as "red", income and rents will control for these characteristics. Conditional on income, rent, and racial characteristics, "red" versus "yellow" HOLC grades were as good as randomly assigned. I test this below by residualizing the variation in HOLC grades and show (hopefully) that as-good-as-random assignment appears to hold -- no other observables explain assignment into "red" versus "yellow", indicating that surveyor effects are at play in designating grade.
+
+HOLC grade D (red) areas with identical 1933-1939 characteristics to HOLC grade C (yellow) areas provide identification of the effect of redlining on current substandard household heating fuel provided historic observables sufficiently explain the designation of "red" versus "yellow". Combined with the assumption that redlined areas tend to have lower out-migration and tend to retain individuals within their neighborhood of birth\footnote{tested in Section \ref{assumptions} of this paper}, observing an increase in substandard heating attributed to redlining indicates that individuals whose parents or grandparents were forced, through policy, to reside within a redlined area are more likely to have a home with substandard heating fuel. Due to the cost of outmigration (e.g. losing family support), individuals whose parents or grandparents resided in redlined areas face choice sets that are heavily weighted towards substandard heating fuel. Finding a significant difference across "red" and similar "yellow" neighborhoods in substandard heating fuel logically leads to a difference in the prevalence of substandard home heating fuel amongst blacks that persists once we condition on income, the leading indicator of energy inequity.
+
+
+### Household response to heating degree days
+Equation \ref{mainSubstandard1} measures a proxy variable for overall heating system efficiency. However, it measurse only one of the three determinants of a household's energy burden, which are (1) the efficiency of the heating source and the integrity of the building envelope; (2) the household's preferences for ambient indoor temperature; and (3) the household's income and budget constraints. Equation \ref{mainSubstandard1} captures only one portion of (1) is captured in the substandard heating fuel.
+
+Observing disparities between the fuel source of redlined and non-redlined homes does not necessarily show that redlining is a driver of observed energy inequity. Some households may have low utility for home heating and thus prefer to live in homes with less expensive or older heating equipment, choosing a low thermostat setpoint. That is, for a household that prefers a low interior thermostat setting, there is little incentive to invest in (or rent a home with) a new, efficient heating unit. Aggregation to the block-group level can mask important heterogeneity in household energy consumption. I use household-level monthly consumption data geolocated to the zip-code level to identify HOLC-grade specific energy consumption responses to cooling and heating events. 
+
+Household preferences and the household budget constraint form an important set of conditions for interpreting the results of Equation \ref{mainSubstandard1}. A household may choose a home to rent or purchase that has substandard heating fuel if the household has a preference for lower-cost housing and little preference for warm ambient temperature. While households may have some preference for warmth, heterogeneity in preferences and in budget constraints suggests some households will select into these inefficiently-heated homes. Thus, I examine a second measure indicative of the energy burden -- the household response to heating degree days. As previously discussed, heating degree days are a measure of the difference between then outdoor daily high and a reference temperature. If the reference temperature is 64 degrees farenheit, and the daily high is 59 degrees farenheit, then the day is a 64-59 = 5 heating degree day. Formally, the equation is $hdd_t = max\{0, \tau_t - T\}$ where $\tau_t$ is the daily high, and $T$ is the reference temperature. For the monthly measures used in this paper, heating degree days is formed by summing over all days in the month.
+
+Lower response to heating degree days can be generated by two competing explanations. First, households may have more efficient homes and heating systems. With a sealed building envelope and modern gas heaters, the cost to maintain the temperature inside may be low relative to households with drafty windows and older heating systems. A competing explanation is that Grade D areas are far less efficient, heating is more expensive on the margin, and households in these less efficient homes compensate by lowering the thermostat setpoint. A home set at 55 degrees overnight will consume less energy than a home set at 75 degrees, even if it is less efficient. To address this confounding, I leverage the household's response to a survey question on thermostat setpoint and build a model of household energy consumption.
+
+
+
+### A model of heating energy consumption
+Let heating energy consumed be determined by $H(\tau_i, T_i; \phi_i)$, where $\tau_i$ is the household's thermostat setpoint, $T_i$ is the outside ambient temperature around household $i$, and $\phi_i$ a parameter summarizing the envelope and appliance efficiency of household $i$. Households with more efficient insulation, dual-pane windows, and higher energy star rated heating systems will have a lower value of $\phi_i$. In a linear form, the cost of heating a home with setpoint $\tau_i$ in month $J$ is:
+
+\begin{eqnarray}
+H = \phi_0 + \phi_i \sum_{d=1}^{D_m}(\tau_i - T_{id}) \label{eq:hdd1}
+\end{eqnarray}
+
+The sum of ambient outdoor daily temperature deviations $T_{id}$ from the thermostat setpoint $\tau_i$ represents the sum of the temperature gradient between indoor and outdoor temperature. We do not observe the ambient outdoor temperature for each household, but do observe the monthly $m$ heating degree days, which are $\sum_{d=1}^{D_m}(\tau_{r(i)} - T_{id})$, where $\tau_r$ is the  heating degree days (HDD) reference temperature. The reference temperature varies by climate zone and is constant for each household across all time periods in the data. Rewriting \ref{eq:hdd1}:
+
+\begin{eqnarray}
+H &=& \phi_0 + \phi_i \sum_{d=1}^{D_m}\tau_i + \phi_i \sum_{d=1}^{D_m} \tau_r - \phi_i \sum_{d=1}^{D_m} T_{id} - \phi_i \sum_{d=1}^{D_m} \tau_r + \epsilon \nonumber \\
+ &=& \phi_0 + \phi_i \sum_{d=1}^{D_m}(\tau_{r(i)} - T_{id}) + \phi_i \sum_{d=1}^{D_m}(\tau_i-\tau_{r(i)}) + \epsilon \nonumber \\
+ &=& \phi_0 + \phi_i \sum_{d=1}^{D_m}(HDD_{id}) + \kappa_{i} + \epsilon \label{eq:hdd2}
+\end{eqnarray}
+
+OOPS, wait, HDD is max on 0. But I only use >0 months? The household thermostat setpoint $\tau_i$ is time invariant. Thus, the household fixed effect absorbs the difference between the reference temperature and the thermostat
+setpoint. If heating costs are not linear in deviations from $\tau_{r(i)}$, $\phi_i$ will capture both the household-specific efficiency, as well as the difference in 
+heating costs per HDD conditional on $\tau_i$. For instance, if a household maintains a very high $\tau_i>\tau_{r(i)}$ and faces convex costs in $T_{i}$, $\phi_i$ will 
+capture this difference. We estimate $\phi_i$ over HOLC grades and household income. In our most flexible specification, we estimate a common $\phi_i$ for each HOLC grade and for each value of $\tau_i$ reported in the data. This is the household's energy consumption response to an increase in HDD conditional on the thermostat setpoint.
+
+Conditioning on a specific overnight or daytime thermostat setting forecloses the possibility of bias due to household adjustment of thermostat settings or preferences for lower ambient temperatures. A household facing a budget constraint or with lower utility for ambient temperature may set the thermostat to a low setpoint. At this setpoint, the household will appear to spend less on energy than another household with a higher setpoint, which is observationally equivalent to a high-efficiency household. With this model, household consumption response functions for those that save on heating by setting the thermostat setpoint very low are identified by variation conditional on their setpoint. By allowing each setpoint bin 
+(<55, 55-60, 60-65, 65-70, 70-75, 75+) to have a separate estimate of response to heating degree days, I capture the effect of heating degree days separate from thermostat setpoint adjustments. 
+
+These estimates are the relevant estimates in examining the question of energy inequity. Instead of looking at total energy expenditures, I examine the cost of maintaining a consistent level of energy services (heat). It may remain that budget constraints cause some households to set their thermostats to a colder temperature than other households, and that energy inequity may still be a concern even if no difference in energy expenditure response to additional heating degree days is measured. I am conditioning out the long-run response (temperature setpoint) of the household to budget constraints. The remaining response identifies the cost to the household of maintaining a constant level of temperature.
+
+Energy inequity is signified by a race-based difference in the response to heating degree days conditional on thermostat setpoint. To test for differences between redlined and non-redlined areas, I estimate separate coefficients for each HOLC grade in the data. I control for a variety of observed housing characteristics interacted with heating degree days onto control for other confounders that may determine a home's response to heating degree days separate from the HOLC grade. I account for Once properly conditioned, the difference between HOLC Grade D (red) and HOLC Grade C (yellow) housing can be estimated an
+
+$$usage^g_i = \phi_0 + \phi_1 hdd_i + \phi_2 hdd_i*(grade_i=D) + \phi_3 averageincome_i*hdd_i + \phi_4 cdd^e_i*hdd_i + \sum_{s=1}^{S} hdd_i*\theta^s + \kappa_i + \varepsilon$$
+
+Where $usage^g_i$ is the monthly observed gas usage, $hdd_i$ is the household's monthly heating degree days, $s\in S$ are the temperature setpoint bins, and $\kappa_i$ is a vector of household fixed effects.
+
+# Data
+
+## Homeowners Loan Corporation (HOLC) Maps
+I obtain GIS shapefiles for the original HOLC grading maps for `r NROW(unique(HOLC$city_id))` cities over `r NROW(unique(HOLC$state))` states from the \href{https://dsl.richmond.edu/panorama/redlining/}{University of Richmond's \textit{Mapping Inequality} project} \citep{Nelson2021}. These maps have been digitized and georectified to align with modern street locations, allowing for a spatial merge to modern block groups, tracts, and zip codes. I spatially merge the HOLC neighborhoods to 2018 ACS Census blockgroups and 2018 Zip Code Tabulation Areas (ZCTAs). These are the finest spatial resolution available from the ACS that also includes data on primary home heating fuel and racial composition. I retrieve the Primary Home Heating Fuel Source variable from the 2018 ACS for each blockgroup and ZCTA that intersects any portion of a HOLC neighborhood.
+
+Neither blockgroups nor ZCTAs align perfectly with HOLC neighborhoods. Blockgroups, which are drawn to follow municipal boundaries whenever possible, are the closest in scale and edges to the HOLC neighborhoods. However, even blockgroups are not perfectly aligned, and are certainly not 1:1. To obtain the HOLC neighborhood associated with a modern 2018 blockgroup, I tally the the spatial intersection shares for each blockgroup and designate each blockgroup by it's plurality HOLC grade. I include "ungraded" in this calculation to account for HOLC neighborhoods on the edge of city areas at the time of survey, and to account for ungraded commerical and industrial corridors that are incorporated into a modern blockgroup. I limit all samples only to those blockgroups where $>80\%$ of the blockgroup, by area, overlaps with a single HOLC neighborhood grade. Because the blockgroups can still span multiple neighborhoods with the same HOLC grade, I aggregate characteristics of the HOLC neighborhood as a weighted mean where the weights are the spatial area shares exclusive of the ungraded areas.
+
+I repeat the same process for ZCTAs, which are much larger aggregations. Because of the granularity of the HOLC maps and the larger extent of ZCTAs, far fewer ZCTAs have $>80\%$ overlap with a single HOLC neighborhood grade, and thus sample sizes for ZCTA samples are sometimes too small for analysis.
+
+To obtain the survey data from the University of Richmond's scanned and digitized surveyor sheets requires mapping the variables recorded across four or more formats of the survey questionnaire. Some questionnaires do not record, for instance, the nationalities of foreign families or the share of the population receiving relief. Some questionnaires report only the mean rent, while others report the rent range. Across the four separate questionnaire formats, important variables like percent African-American populations are listed in different areas of the report. To regularize across these various questionnaires, I map the consistent variables from each questionnaire and extract them into a regular table. I process the text to obtain numeric values for numeric variables, extracting the median of a range, and inferring the modal value of qualitative descriptions from those fields where a qualitative and quantitative value are given. For instance, the term "few" is often entered for percent African-American. In a handful of data fields for this question, the surveyor reports "few - 2\%" or "few - 1\%". For these qualitative answers, I use the modal associated value. "Few" becomes 1\%, "nominal" becomes 2\%, "several" and "some" become 3\%, "scattered" becomes 3.5\%,and "small" becomes 5\%  based on the entries with both qualitative and quantitative reports.
+
+In total, the data contains `r NROW(BG.int)` blockgroups that intersect at least some of one or more HOLC neighborhoods. Of these, `r sum(BG.int$share.max>.80)` intersect more than 80\% with a single HOLC grade, and `r sum(BG.int$share.max>.95)` intersect more than 95\%. Table \ref{tab:datasummaryBG1} shows summary statistics for these blockgroups by sample.
+    
+```{r datasummary1, echo=FALSE, out.width = '90%', message = FALSE, error = FALSE}
+#` https://vincentarelbundock.github.io/modelsummary/articles/datasummary.html
+  
+minmax <- function(x) sprintf("[%.2f, %.2f]", min(x, na.rm=T), max(x, na.rm=T))
+mean_na <- function(x) mean(x, na.rm = TRUE)
+sd_na <- function(x) sd(x, na.rm=TRUE)
+Missing <- function(x, fmt = "%.0f") sprintf(fmt = fmt, sum(is.na(x)))
+
+# datasummary((`Substandard Heating` = OtherSubstandardNarrow) + (`Median Income 2018` = MedIncome2018) + (`Median Income 1936` = MedIncome1936) + (`Share of largest overlap` = share.max) + (`Pct Black 1933` = NBlack_PCT) + (`Blacks present` = NBlack_YN) + (`Mean Rent 1935` = Rent35_Mean) + (`Mean Rent 37-39` = Rent3739_Mean) ~ Factor(GRADE.max) * ((`Mean` = mean_na) + (`Std. dev` = sd_na) + (`Min Max` = minmax) + Missing), 
+#             data = BG.int %>% st_set_geometry(NULL) %>%  dplyr::mutate(GRADE.max = fct_relevel(GRADE.max,'D','C','B','A','X'),
+#                                                                        NBlack_YN = as.integer(NBlack_YN),
+#                                                                        NBlack_PCT = ifelse(!is.finite(NBlack_PCT), NA, NBlack_PCT/100)) %>% dplyr::filter(share.max>.80),
+#             output = 'kableExtra', align = 'c',  title = 'Summary statistics for blockgroups with 80 percent or more overlap (study) \\label{tab:datasummaryBG1}')  %>% 
+#   kable_styling(latex_options="scale_down")#  %>% as_image()
+
+datasummary( ( (`HOLC Grade` = Factor(GRADE.max)) + 1)  * ( (`Substandard Heating` = OtherSubstandardNarrow) + (`Median Income 2018` = MedIncome2018) + (`Median Income 1936` = MedIncome1936) + (`Share of largest overlap` = share.max) + (`Pct Black 1933` = NBlack_PCT) + (`Blacks present` = NBlack_YN) + (`Mean Rent 1935` = Rent35_Mean) + (`Mean Rent 37-39` = Rent3739_Mean) ) ~ ((`Mean` = mean_na) + (`Std. dev` = sd_na) + (`Min Max` = minmax) + Missing), 
+            data = BG.int %>% st_set_geometry(NULL) %>%  dplyr::mutate(GRADE.max = fct_relevel(GRADE.max,'D','C','B','A','X'),
+                                                                       NBlack_YN = as.integer(NBlack_YN),
+                                                                       NBlack_PCT = ifelse(!is.finite(NBlack_PCT), NA, NBlack_PCT/100)) %>% dplyr::filter(share.max>.80),
+            output = 'kableExtra', fmt = 3, align = 'cllcccc',  title = 'Summary statistics for blockgroups with 80 percent or more overlap (study) \\label{tab:datasummaryBG1}')  %>% 
+  kable_styling(latex_options="scale_down")#  %>% as_image()
+## TO DO: Add divider lines
+
+```
+
+
+## Census blockgroups
+
+
+<!---#### COMMENT OUT THIS SECTION -->
+<!-- HOLC grading and survey data are available at the neighborhood level, where the average neighborhood size is approximately `r prettyNum(round(mean(st_area(BG.int)/(1000^2)), 2), big.mark=',')` square kilometers.  -->
+
+
+<!-- ### Substandard Heating Fuel by Income and Ethnicity -->
+
+<!-- I first examine the incidence of energy burden on minority populations.  -->
+<!-- A model of home selection would clearly predict a relationship between energy burden and income as low-income individuals trade off  -->
+<!-- energy efficient (yet higher cost) housing for lower-cost but energy-inefficient housing.  -->
+<!-- Since a home's energy efficiency is part of a bundle of attributes, households with low income may often trade  -->
+<!-- energy efficiency for other properties, such as larger square footage.  -->
+<!-- Lower efficiency homes may be more expensive to heat to a comfortable standard.  -->
+<!-- However, households with severe budget constraints may select a low-efficiency house and select to spend as little as possible on heating,  -->
+<!-- resulting in very low inside temperatures, lower housing costs, and low energy expenditures. An examination of heating fuel source -->
+<!-- does not speak directly to energy burden, but rather identifies income or racial groups that tend to  -->
+<!-- have poor heating infrastructure and thus either bear low indoor temperatures during cold weather, or spend -->
+<!-- higher amounts using old, inefficient, or piecemeal heating sources like space heaters. -->
+
+<!-- At the block-group level, I regress the fraction of households reporting substandard home heating fuel. I define -->
+<!-- substandard home heating fuel in multiple ways: -->
+
+<!-- \begin{itemize} -->
+<!-- \item[Wide]: Coal, Wood, Liquid Propane Gas, Fuel Oil, Other, or None -->
+<!-- \item[Med]: Coal, Liquid Gas, Fuel Oil, Other or None -->
+<!-- \item[Original]:  Coal. Wood, Liquid Propane Gas, Other, or None -->
+<!-- \item[Narrow]: Coal and None  -->
+<!-- \end{itemize} -->
+
+
+<!-- \begin{eqnarray*} -->
+<!-- SubstandardHeating_{i} = \beta_0 + \beta_1 MedInc_b + \beta_2 X_b + \beta_3 MedInc_b X_b + \Gamma_{c(b)} \epsilon_i  \nonumber -->
+<!-- \end{eqnarray*} -->
+
+<!-- Here, $X_b$ includes median income in 2018 and shares of Black, White, Asian and Other Race, plus interactions. Because the  -->
+<!-- data is at the census block-group level $b$, I include county FIPS fixed effects for county $c(b)$. Census block-groups do not -->
+<!-- perfectly align with HOLC neighborhoods. I calculate the share of each block-group within a HOLC neighborhood and include only those census -->
+<!-- block-groups that coincide more than 80\% with a single HOLC grade. In Column 9, below, I increase the treshold to 95\%. This specification -->
+<!-- does not use HOLC grade, but  -->
+
+
+<!-- ```{r substandard-est-1, echo=FALSE, fig.width=7, cache = TRUE, result='as.is', message=F, warning=F} -->
+
+<!--     inc2.blank = feols(fml = OtherSubstandard ~ MedIncome2018*Black + MedIncome2018*White + Asian + OtherRace | STCO,  -->
+<!--                       data = BG.int %>% dplyr::filter(TotalFuel>298) %>% st_set_geometry(NULL)) -->
+<!--     inc1.blank = feols(fml = OtherSubstandard ~ MedIncome2018 | STCO,  -->
+<!--                       data = BG.int %>% dplyr::filter(share.max>.8 & !is.na(GRADE.max) & GRADE.max!='X') %>% st_set_geometry(NULL)) -->
+
+<!--     inc2.wide = feols(fml = OtherSubstandardWide ~ MedIncome2018*Black + MedIncome2018*White + Asian + OtherRace | STCO,  -->
+<!--                        data = BG.int %>% dplyr::filter(TotalFuel>298) %>% st_set_geometry(NULL)) -->
+<!--     inc1.wide = feols(fml = OtherSubstandardWide ~ MedIncome2018 | STCO,  -->
+<!--                        data = BG.int %>% dplyr::filter(share.max>.8 & !is.na(GRADE.max) & GRADE.max!='X') %>% st_set_geometry(NULL)) -->
+
+<!--     inc2.med = feols(fml = OtherSubstandardMed ~ MedIncome2018*Black + MedIncome2018*White + Asian + OtherRace | STCO,  -->
+<!--                       data = BG.int %>% dplyr::filter(TotalFuel>298) %>% st_set_geometry(NULL)) -->
+<!--     inc1.med = feols(fml = OtherSubstandardMed ~ MedIncome2018 | STCO,  -->
+<!--                       data = BG.int %>% dplyr::filter(share.max>.8 & !is.na(GRADE.max) & GRADE.max!='X') %>% st_set_geometry(NULL)) -->
+
+<!--     inc2.narrow = feols(fml = OtherSubstandardNarrow ~ MedIncome2018*Black + MedIncome2018*White + Asian + OtherRace | STCO,  -->
+<!--                      data = BG.int %>% dplyr::filter(TotalFuel>298) %>% st_set_geometry(NULL)) -->
+<!--     inc1.narrow = feols(fml = OtherSubstandardNarrow ~ MedIncome2018 | STCO,  -->
+<!--                      data = BG.int %>% dplyr::filter(share.max>.8 & !is.na(GRADE.max) & GRADE.max!='X') %>% st_set_geometry(NULL)) -->
+<!--     #inc95.narrow = feols(fml = OtherSubstandardNarrow ~ MedIncome2018 | STCO,  -->
+<!--     #                    data = BG.int %>% dplyr::filter(share.max>.95 & !is.na(GRADE.max) & GRADE.max!='X') %>% st_set_geometry(NULL)) -->
+
+
+<!--     modelsummary(models = list(inc1.wide, inc2.wide,inc1.blank, inc2.blank,  -->
+<!--                                inc1.med, inc2.med, inc1.narrow, inc2.narrow), se = 'cluster', -->
+<!--                  output = 'kableExtra',  # instead of latex so that I can use kable_styling(latex_options = 'scale_down') for the table -->
+<!--                  stars=TRUE, fmt = '%.5f', -->
+<!--                  title = 'Share of Households with Substandard Fuel by Ethnicity and Income', -->
+<!--                  notes = 'Robust SE clustered by FIPS county') %>%  # output as kableExtra -->
+<!--       add_header_above(c('Variable' = 1, 'Wide' = 2, 'Original' = 2, 'Medium' = 2, 'Narrow' = 3)) %>% -->
+<!--       kable_styling(latex_options = 'scale_down') # to use this kableExtra option! -->
+
+<!--     #---end -->
+<!-- ``` -->
+
+<!-- #### Results -->
+
+<!-- Nothing particularly good here. Odd that all ethnicities have a negative effect - am I missing something here? -->
+
+
+
+### Substandard heating fuel by HOLC grade
+
+
+#### Results
+
+Column 1 allows an additive effect for median income in 2018 and 1936 (reported from HOLC surveys), while 2-8 allow an interaction. 
+
+As expected, current median blockgroup income predicts a lower share of homes with substandard heating fuel across all models. 
+Median income in 1936 predicts \textbf{higher} prevalance of substandard heating in higher 1936 median income areas. 
+
+Columns 4-7 include controls for current racial composition. 
+These results consistently find that higher percentages of Blacks are associated with lower likelihood of substandard heating fuel. \textbf{EXPLAIN!!}
+
+The coefficient on HOLC Grade D is positive and significant across almost all specifications, indicating that, conditional on a rich set of controls 
+including 1936 characteristics to control for selection on observables, areas that were graded "D" by the HOLC are more likely to have substandard 
+heating fuels in 2018 relative to those graded "C".
+
+
+
+
+```{r substandard-est-3, echo=FALSE, fig.width=7, result='as.is', message=F, warning=F, cache = TRUE}
+    
+          # Try with OtherSubstandardWide 
+          # Results are not super helpful, perhaps this should be in an appendix?
+          
+    BG.list2 = list(
+      
+      feols(fml = OtherSubstandardWide ~ as.factor(GRADE.max) + MedIncome2018 + MedIncome1936 + Rent3739_Mean | STCO,
+            data = BG.int %>% dplyr::filter(share.max>.8 & !is.na(GRADE.max) & GRADE.max!='X') %>% st_set_geometry(NULL)),
+      
+      feols(fml = OtherSubstandardWide ~ as.factor(GRADE.max) + MedIncome2018*MedIncome1936 + Rent3739_Mean | STCO,
+            data = BG.int %>% dplyr::filter(share.max>.8 & !is.na(GRADE.max) & GRADE.max!='X') %>% st_set_geometry(NULL))  ,  
+      
+      feols(fml = OtherSubstandardWide ~ as.factor(GRADE.max) + MedIncome2018*MedIncome1936 + Rent3739_Mean | STCO,
+            data = BG.int %>% dplyr::filter(share.max>.95 & !is.na(GRADE.max) & GRADE.max!='X') %>% st_set_geometry(NULL)),
+      
+      feols(fml = OtherSubstandardWide ~ as.factor(GRADE.max) +  MedIncome2018*MedIncome1936 + Rent3739_Mean + Black + White + Asian | STCO, 
+            data = BG.int %>% dplyr::filter(share.max>.8  & GRADE.max!='X') %>% st_set_geometry(NULL))  ,
+      
+      feols(fml = OtherSubstandardWide ~ as.factor(GRADE.max) +  MedIncome2018*MedIncome1936 + Rent3739_Mean + Black*as.factor(GRADE.max) + White + Asian | STCO, 
+            data = BG.int %>% dplyr::filter(share.max>.8  & GRADE.max!='X') %>% st_set_geometry(NULL))  ,
+      
+      feols(fml = OtherSubstandardWide ~ as.factor(GRADE.max) +  MedIncome2018*MedIncome1936 + Rent3739_Mean + Black + White + Asian | STCO, 
+            data = BG.int %>% dplyr::filter(share.max>.95 & GRADE.max!='X' ) %>% st_set_geometry(NULL)),
+      
+      feols(fml = OtherSubstandardWide ~ as.factor(GRADE.max) +  MedIncome2018*MedIncome1936 + Rent3739_Mean + NBlack_YN + NBlack_PCT + Black + White + Asian | STCO, 
+            data = BG.int %>% dplyr::filter(share.max>.8  & GRADE.max!='X') %>% st_set_geometry(NULL))  ,
+      
+      feols(fml = OtherSubstandardWide ~ as.factor(GRADE.max) +  MedIncome2018*MedIncome1936 + Rent3739_Mean + NBlack_YN + NBlack_PCT + Black + White + Asian | STCO, 
+            data = BG.int %>% dplyr::filter(share.max>.95 & GRADE.max!='X' ) %>% st_set_geometry(NULL))
+    )
+    
+    modelsummary(models = BG.list2, se = 'cluster',
+                 output = 'kableExtra',  # instead of latex so that I can use kable_styling(latex_options = 'scale_down') for the table
+                 stars=TRUE, fmt = '%.5f',
+                  add_rows = tibble::tribble(~term, ~one, ~two, ~three, ~f, ~fi, ~si, ~se, ~ei,
+                                        'HOLC Grade Threshold', '80%','80%', '95%', '80%', '80%', '95%', '80%', '95%'),
+                 title = 'Share of Households with OtherSubstandardWide Fuel (Coal + Wood + OtherFuel + LPGas + FuelOil + NoFuel) by HOLC Grade',
+                 notes = list('Robust SE clustered by FIPS county','Columns 1, 2, 3, 5 are blokgroups with >80% of total area in one HOLC grade; 4, 6, and 8 are >95%')) %>%  # output as kableExtra
+      kable_styling(latex_options = 'scale_down') # to use this kableExtra option!
+```
+
+
+#### Results
+The same phenomenon is not observed when defining substandard heating as including LP gas and fuel oil. In many parts
+of the country, LP gas and fuel oil are commonplace, and can be relatively efficient and desirable. It is not wholly
+unexpected for this to be insignificant.
+
+
+```{r substandard-est-4zcta, eval = FALSE, echo=FALSE, fig.width=7, result='as.is', message=F, warning=F, cache = cacheoption}
+    # NOT EVAL: Eval is turned off, no ZCTA's are in the data after dropping NA's from HOLC and filtering down to 80% coverage.
+    # ZCTA is just not viable. Perhaps for CA with RASS data?
+ZCTA.list= list(
+  
+  feols(fml = OtherSubstandard ~ as.factor(GRADE.max) + MedIncome2018 + MedIncome1936 + Rent3739_Mean | STATEFP ,
+        data = ZCTA.int %>% dplyr::filter(share.max>.7 & !is.na(GRADE.max) & GRADE.max!='X') %>% st_set_geometry(NULL))   ,
+
+  
+  feols(fml = OtherSubstandard ~ as.factor(GRADE.max) +  MedIncome2018 + MedIncome1936 + Rent3739_Mean | STATEFP, 
+        data = ZCTA.int %>% dplyr::filter(share.max>.7  & GRADE.max!='X') %>% st_set_geometry(NULL))  
+  
+  # feols(fml = OtherSubstandard ~ as.factor(GRADE.max) +  MedIncome2018*MedIncome1936 + Rent3739_Mean + Black + White + Asian | STCO, 
+  #       data = ZCTA.int %>% dplyr::filter(share.max>.95 & GRADE.max!='X' ) %>% st_set_geometry(NULL)),
+  
+#  feols(fml = OtherSubstandard ~ as.factor(GRADE.max) +  MedIncome2018*MedIncome1936 + Rent3739_Mean + NBlack_YN + NBlack_PCT + Black + White + Asian | STCO, 
+  #      data = ZCTA.int %>% dplyr::filter(share.max>.8  & GRADE.max!='X') %>% st_set_geometry(NULL))  ,
+  
+#  feols(fml = OtherSubstandard ~ as.factor(GRADE.max) +  MedIncome2018*MedIncome1936 + Rent3739_Mean + NBlack_YN + NBlack_PCT + Black + White + Asian | STCO, 
+    #    data = ZCTA.int %>% dplyr::filter(share.max>.95 & GRADE.max!='X' ) %>% st_set_geometry(NULL))
+)
+
+modelsummary(models = ZCTA.list, se = 'cluster',
+             output = 'kableExtra',  # instead of latex so that I can use kable_styling(latex_options = 'scale_down') for the table
+             stars=TRUE, fmt='%.5f',
+             title = 'Share of Households with OtherSubstandardWide Fuel (Coal + Wood + OtherFuel + LPGas + FuelOil + NoFuel) (by ZCTA)',
+             notes = 'Robust SE clustered by FIPS county') %>%  # output as kableExtra
+  kable_styling(latex_options = 'scale_down') # to use this kableExtra option!
+## END NOT EVAL
+```
+
+
+
+
+<!-- #### Results using Zip Code Tabulation Area (ZCTA) -->
+
+<!-- Zipcode Tabulation Areas are coarser than census blockgroups.  -->
+<!-- Due to this, there are fewer ZCTAs that fall predominantly in one HOLC grade,  -->
+<!-- resulting in a smaller sample size. Of the `r comma(NROW(unique(ZCTA.int$AFFGEOID10)))` zip  -->
+<!-- codes that touch on one or more HOLC neighborhoods, `r ZCTA.int %>% st_set_geometry(NULL) %>% dplyr::filter(share.max>.8 & GRADE.max!='X' & !is.na(GRADE.max)) %>% distinct(AFFGEOID10) %>% count() %>% pull(n) %>% comma()` zip codes have greater than 80% within one HOLC grade. Of these, `r ZCTA.int %>% st_set_geometry(NULL) %>% dplyr::filter(GRADE.max=='D' & share.max>.8 & GRADE.max!='X' & !is.na(GRADE.max)) %>% distinct(AFFGEOID10) %>% count() %>% pull(n) %>% comma()` are Grade D (red). Of these, only `r ZCTA.int %>% st_set_geometry(NULL) %>% dplyr::filter(GRADE.max=='D' & share.max>.8 & GRADE.max!='X' & !is.na(GRADE.max) &!is.na(MedIncome1936) &  !is.na(Rent3739_Mean)) %>% distinct(AFFGEOID10) %>% count() %>% pull(n) %>% comma()` zip code(s) have HOLC survey data including median income, presence of minorities, and rent data for 1936-38. This precludes the use of zip code aggregations to estimate HOLC grading on current substandard heating fuel. -->
+
+
+
+
+
+
+## Household-level energy consumption (CA-RASS)
+Household energy consumption data is retrieved from the California Residential Appliance Saturation Survey (RASS) for 2009 and (hopefully) 2019. The RASS
+is commissioned by the California Public Utilities Commission and implemented by DNV GL Energy Insights. The survey contains information on household
+energy consumption including home age, primary heating fuel source, and thermostat setpoint. The survey also includes the household's zip code, 
+household characteristics including income and number of children, and merges two years of billing information obtained direclty from the gas and electric
+utilities serving the household. The survey sample consists of `r NROW(s09)` households sampled from all over California.
+
+We are interested in household's energy consumption response to increases in heating degree days. We focus on households that rely primarily on electric heating. For each household, we
+estimate a consumption response function that summarizes the household's change in electricity consumption per change in monthly heating degree days. 
+This measure will be larger if a household consumes more energy when temperatures are lower, and smaller if a household consumes less energy when temperatures drop.
+I allow this response to vary bsed on the HOLC grade that covers the plurality of the zip code in which the household lies. I use only those zip codes in which greater than 80\% 
+of the zip code is within one specific HOLC grade.
+ 
+*A priori*, it is not clear whether the interaction of heating degree days and HOLC-designated redlining should be positive or negative. If a household 
+prefers to remain warm and comfortable on a cold night, then expenditures will be higher when temperatures are lower. Similarly, if a household in a redlined area
+maintains the same indoor temperature setpoint but has a home with lower energy ratings or is otherwise less efficient, then energy expenditures will be greater as well.
+If expenditures are not greater, then it may be that the household trades off comfort by lowering the indoor temperature in order to keep expenditures low, or
+it may be that the home is very efficient, and more energy is not needed to maintain a constant temperature. This ambiguity confounds interpretation of estimates.
+
+
+Table (below) reports the results from a regression of the form:
+
+$$hdd^e_h = \beta_0 + \sum 1(grade_h=g)\beta_g + \beta_{inc} avgincome_h + cdd^e_h + \gamma^{CZ} + \varepsilon$$
+
+Where $hdd^e$ is the electricity consumption response to one additional heating degree day for household $h$ located in HOLC grade $g$. $cdd^e$ is the household's electricity consumption response
+to an additional cooling degree day. Table (below that) shows results for $hdd^g$. $\gamma^{CZ}$ are climate-zone fixed effects.
+
+
+```{r RASS-1setup, echo=F, cache=TRUE, warning=F, message = F}
+all09.use = inner_join(s09, full_join(e09.use, g09.use, by=c('IDENT')), by='IDENT') %>% 
+  left_join(ZCTA.int %>% st_set_geometry(NULL) %>% 
+              dplyr::mutate(servzip = as.integer(zip)) %>%
+              dplyr::select(GRADE.max, GRADE.A:GRADE.NA, MedIncome1936, NBlack_PCT, NBlack_YN, Rent3739_Mean, Minc, share.max, servzip),
+                                    by = 'servzip')
+
+SET.codebook = data.frame(HNITESET = c(1:7, 97),
+                          NITESET = c('Off','<55','55-60','60-65','65-70','70-75','>75','Unk')) %>%
+  dplyr::mutate(NITESET = factor(NITESET, levels = c('Off','<55','55-60','60-65','65-70','70-75','>75','Unk')))
+
+all09.use = all09.use %>% left_join(SET.codebook, by = 'HNITESET') %>%
+  replace_na(list(NITESET = 'Unk')) %>%
+  dplyr::mutate(NITESET = factor(NITESET)) %>%
+  left_join(SET.codebook %>% dplyr::select(HDAYSET = HNITESET, DAYSET = NITESET), by = 'HDAYSET') %>%
+  replace_na(list(DAYSET = 'Unk')) %>%
+  dplyr::mutate(DAYSET = factor(DAYSET))
+
+all09.use = all09.use %>% dplyr::mutate(GRADE.maxl = factor(GRADE.max, levels = c('C','X','D','A','B')))
+```
+
+```{r RASS-1ex, echo=F, cache=TRUE, warning=F, message = F}
+
+  # Do the responses (coefs. cdd.e, cdd.g, hdd.e, hdd.g) vary by redlining?
+  # # What if we control for cdd.e response (AC usage, which tells us about building envelope)
+modelsummary(list(feols(hdd.g ~ GRADE.max + avginc | CZT24, all09.use %>% 
+                          dplyr::filter(share.max >.80 & GRADE.max%in%c('C','D','X')) %>% 
+                          unnest(gdata) %>% dplyr::filter(PHTNGCNT==1|PHTNGRAD==1) %>% 
+                          dplyr::mutate(GRADE.max = fct_relevel(GRADE.max, 'X','D','C')), cluster = 'CZT24'),
+                  # feols(hdd.g ~ GRADE.max + avginc + cdd.e  | CZT24, all09.use %>% 
+                  #         dplyr::filter(share.max >.80 & GRADE.max%in%c('C','D','X')) %>% 
+                  #         unnest(gdata) %>% dplyr::filter(PHTNGCNT==1|PHTNGRAD==1) %>% 
+                  #         dplyr::mutate(GRADE.max = fct_relevel(GRADE.max, 'X','D','C')), cluster = 'CZT24'),
+                  feols(hdd.g ~ GRADE.max + avginc + homeage + kids | CZT24, all09.use %>% 
+                          dplyr::filter(share.max >.80 & GRADE.max%in%c('C','D','X')) %>% 
+                          unnest(gdata) %>% dplyr::filter(PHTNGCNT==1|PHTNGRAD==1) %>% 
+                          dplyr::mutate(GRADE.max = fct_relevel(GRADE.max, 'X','D','C')), cluster = 'CZT24')),
+                  # feols(hdd.g ~ GRADE.max + avginc + cdd.e + homeage + kids | CZT24, all09.use %>% 
+                  #         dplyr::filter(share.max >.80 & GRADE.max%in%c('C','D','X')) %>% 
+                  #         unnest(gdata) %>% dplyr::filter(PHTNGCNT==1|PHTNGRAD==1) %>% 
+                  #         dplyr::mutate(GRADE.max = fct_relevel(GRADE.max, 'X','D','C')), cluster = 'CZT24')),
+             stars=T,
+             title = 'Regression of heating-degree day gas consumption response on HOLC grade and income \\label{tab:responsegas1}',
+             notes = c('Using only households with gas as primary heating fuel','Omitted grade is refactored to be "X" '))
+```
+
+```{r RASS-2ex}
+
+modelsummary(list(feols(hdd.e ~ as.factor(GRADE.max) + avginc | CZT24, all09.use %>% 
+                          dplyr::filter(share.max >.80) %>% unnest(edata) %>% dplyr::filter(PHTELCRH==1|PHTELBSB==1)%>% 
+                          dplyr::mutate(GRADE.max = fct_relevel(GRADE.max, 'X','D','C')), cluster = 'CZT24'),
+                  feols(hdd.e ~ as.factor(GRADE.max) + avginc + cdd.e | CZT24, all09.use %>% 
+                          dplyr::filter(share.max >.80) %>% unnest(edata) %>% dplyr::filter(PHTELCRH==1|PHTELBSB==1)%>% 
+                          dplyr::mutate(GRADE.max = fct_relevel(GRADE.max, 'X','D','C')), cluster = 'CZT24'),
+                 feols(hdd.e ~ as.factor(GRADE.max) + avginc   + homeage + kids | CZT24, all09.use %>% 
+                              dplyr::filter(share.max >.80) %>% unnest(edata) %>% dplyr::filter(PHTELCRH==1|PHTELBSB==1)%>% 
+                              dplyr::mutate(GRADE.max = fct_relevel(GRADE.max, 'X','D','C')), cluster = 'CZT24'),
+                  feols(hdd.e ~ as.factor(GRADE.max) + avginc + cdd.e +  homeage + kids | CZT24, all09.use %>% 
+                              dplyr::filter(share.max >.80) %>% unnest(edata) %>% dplyr::filter(PHTELCRH==1|PHTELBSB==1)%>% 
+                              dplyr::mutate(GRADE.max = fct_relevel(GRADE.max, 'X','D','C')), cluster = 'CZT24')),
+                  # feols(hdd.e ~ as.factor(GRADE.max) + avginc + cdd.e +  homeage + kids + Rent3739_Mean + MedIncome1936 | CZT24, all09.use %>% 
+                  #             dplyr::filter(share.max >.80) %>% unnest(edata) %>% dplyr::filter(PHTELCRH==1|PHTELBSB==1)%>% 
+                  #             dplyr::mutate(GRADE.max = fct_relevel(GRADE.max, 'X','D','C')), cluster = 'CZT24')),
+             stars=T,
+             title = 'Regression of heating-degree day electricity consumption response on HOLC grade and income\\label{tab:responseelectric1}',
+             notes = c('Using only households with electricity as primary heating fuel','Omitted grade is "X" for common comparison with gas as all "C" is lost in gas'))
+```
+
+
+Coefficient results in \ref{tab:responsegas1}, Model (1) indicate that households located inside the HOLC Grade D (red) areas 
+have significantly higher gas responses relative to those in HOLC ungraded areas within the urban boundary and relative
+to those in HOLC Grade C. The omitted factor in \ref{tab:responsegas1} is ungraded so that results on Grade D can be 
+compared directly to \ref{tab:responseelectric1}, which has insufficient data to compare to Grade C.
+
+Table \ref{tab:responseelectric1} shows significantly lower electricity responses.
+In each case, only households that report primary heating fuel of gas (first table) and electricity (second table) are included. 
+The ambiguity in effect is clear in examining Table \ref{tab:responseelectric1}, which shows a significantly *lower* 
+effect within the HOLC red (D) areas. In Grade D (red) areas, households using natural gas for their primary heating fuel
+tend to have lower response to heating degree days relative to those in Grade C.
+
+
+
+```{r RASS-1b, message=F, warning=F, echo = F, cache = TRUE}
+# What if we pool all of the monthly bill observations? Turns out, there are very few (if any) NG-using Hh's in D!  dplyr::filter(cdd<=10 & (PHTNGCNT==1|PHTNGRAD==1))
+all09.use.pooled = all09.use %>% unnest(edata) %>% dplyr::filter(share.max > .90 & cdd<=0 & (PHTELCRH==1|PHTELBSB==1)) %>%
+  dplyr::mutate(NITESET = relevel(NITESET, ref = '>75'),
+                DAYSET = relevel(DAYSET, ref = '>75'),
+                ethnicity = relevel(ethnicity, ref = 'White'),
+                avginc1000 = avginc/1000)
+
+modelsummary(list(
+  feols(u ~ hdd + hdd:GRADE.max + hdd:avginc | IDENT,             weights=~d, data = all09.use.pooled, warn = F), # Do redlined areas have diff. responses?
+  feols(u ~ hdd + hdd:GRADE.max + hdd:avginc + hdd:cdd.e | IDENT, weights=~d, data = all09.use.pooled, warn = F) , # Do redlined areas have diff. responses controlling for building envelope (w/AC usage)
+  feols(u ~ hdd + hdd:NITESET + hdd:GRADE.max + hdd:avginc + hdd:cdd.e | IDENT, weights=~d, data = all09.use.pooled, warn = F) , # Do redlined areas have diff. responses cond. on setpoint
+  feols(u ~ hdd + hdd:DAYSET + hdd:GRADE.max + hdd:avginc + hdd:cdd.e | IDENT,  weights=~d, data = all09.use.pooled, warn = F) ,# Or daytime setting
+  feols(u ~ hdd + hdd:NITESET + hdd:GRADE.max + hdd:avginc  + hdd:Rent3739_Mean | IDENT, weights=~d, data = all09.use.pooled, warn = F), # Looks good with just nighttime setting + rent37. .10 sig for daytime
+  feols(u ~ hdd + hdd:DAYSET + hdd:NITESET + hdd:GRADE.max + hdd:avginc + hdd:cdd.e | IDENT, weights=~d, data = all09.use.pooled, warn = F),
+  feols(u ~ hdd + hdd:DAYSET + hdd:NITESET + hdd:GRADE.max + hdd:avginc  | IDENT, weights=~d, data = all09.use.pooled, warn = F),
+  feols(u ~ hdd + hdd:DAYSET + hdd:NITESET + hdd:GRADE.max + hdd:avginc + hdd:Rent3739_Mean | IDENT, weights=~d, data = all09.use.pooled, warn = F),
+  feols(u ~ hdd + hdd:DAYSET:as.factor(CZT24) + hdd:NITESET:as.factor(CZT24) + hdd:GRADE.max + hdd:avginc  | IDENT, weights=~d, data = all09.use.pooled, warn = F),
+  feols(u ~ hdd + hdd:DAYSET + hdd:NITESET + hdd:GRADE.max + hdd:avginc  | IDENT, weights=~d, data = all09.use.pooled %>% dplyr::filter(DAYSET !='Unk' & NITESET !='Unk'), warn = F)),# Or daytime setting
+  stars = T,
+  # coef_omit = c('CZT24'),
+  title = 'Regression of electricity consumption on heating degree days, interacted with HOLC grade and income, conditional on thermostat setpoint\\label{tab:electricresponsethemset1}',
+  notes = c('Using only households with electricity as primary heating fuel','Omitted grade is "C"'),
+  output = 'kableExtra') %>%
+  kable_styling(latex_options = 'scale_down')
+```
+
+
+
+
+Results have the expected sign - an increase in the heating degree days leads to an increase in electricity consumption across each of the specifications. 
+Households located inside a HOLC Grade D (red) area show around two to three times the consumption per hdd relative to the omitteed category, Grade C. 
+Unfortunately, too few households lie in HOLC areas with reported covariates necessary to control
+for unobservables that may have affected the treatment (assignment to HOLC red) and the current outcome (home efficiency / gas consumption per hdd).  
+Column (3) through (7) control for the reported nighttime and daytime temperature setpoints. In both 3 and 4, the main effect remains (and increases in magnitude) - conditional on a target setpoint, 
+an increase in $hdd$ leads to an increase in usage. 
+Although insignificant, the interaction for the two lowest bins, 55-60 and 60-65, is negative, indicating that an increase in $hdd$ for households with very low overnight setpoints
+leads to smaller increases in ELECTRICITY consumption relative to the omitted category, which is "off/other". As expected, households with very high overnight setpoints (>75) have very high 
+consumption responses to $hdd$. In the last column, unknown thermostat setpoints are dropeed from the data. The effect of HOLC Grade D (red) persists.
+
+Notably, households within the HOLC red (D) area continue to exhibit two to three times the consumption response relative to households in the omitted category, even accounting for
+potentially heterogeneous preferences for overnight temperature setpoints. This indicates that households in HOLC red areas are not simply exhibiting greater preference
+for overnight comfort, but rather face higher expenditures simply to maintain one constant temperature.
+
+
+
+
+```{r RASS-1bGas, message=F, warning=F, echo = F, cache = TRUE}
+all09.use.pooled.g = all09.use %>% unnest(gdata) %>% dplyr::filter(share.max > .90 & cdd<=0 & (PHTNGCNT==1|PHTNGRAD==1)) %>%
+  dplyr::mutate(NITESET = relevel(NITESET, ref = '>75'),
+                DAYSET = relevel(DAYSET, ref = '>75'),
+                ethnicity = relevel(ethnicity, ref = 'White'),
+                GRADE.maxl = fct_relevel(GRADE.max, 'C','X','D'),
+                avginc1000 = avginc/1000)
+
+modelsummary(list(
+  feols(u ~ hdd + hdd:GRADE.maxl + hdd:avginc | IDENT,             weights=~d, data = all09.use.pooled.g, warn = F), # Do redlined areas have diff. responses?
+  feols(u ~ hdd + hdd:GRADE.maxl + hdd:avginc + hdd:cdd.e | IDENT, weights=~d, data = all09.use.pooled.g, warn = F) , # Do redlined areas have diff. responses controlling for building envelope (w/AC usage)
+  feols(u ~ hdd + hdd:NITESET + hdd:GRADE.maxl + hdd:avginc + hdd:cdd.e | IDENT, weights=~d, data = all09.use.pooled.g, warn = F) , # Do redlined areas have diff. responses cond. on setpoint
+  feols(u ~ hdd + hdd:DAYSET + hdd:GRADE.maxl + hdd:avginc + hdd:cdd.e | IDENT,  weights=~d, data = all09.use.pooled.g, warn = F) ,# Or daytime setting
+  feols(u ~ hdd + hdd:DAYSET + hdd:NITESET + hdd:GRADE.maxl + hdd:avginc  | IDENT, weights=~d, data = all09.use.pooled.g, warn = F),
+  feols(u ~ hdd + hdd:DAYSET + hdd:NITESET + hdd:GRADE.maxl + hdd:avginc + hdd:cdd.e | IDENT, weights=~d, data = all09.use.pooled.g, warn = F)),# Or daytime setting
+  stars = T,
+  title = 'Regression of natural gas consumption on heating degree days, interacted with HOLC grade and income, conditional on thermostat setpoint\\label{tab:gasresponsethemset1}',
+  notes = c('Using only households with natural gas as primary heating fuel','Omitted grade is "C"'),
+  output = 'kableExtra') %>%
+  kable_styling(latex_options = 'scale_down')
+```
+
+Unfortunately, we **lose all Grade D households in natural gas**.
+
+
+
+#### Household level energy by ethnicity
+
+This section examines the coefficient of response across ethnicity, as well as HOLC grade and thermostat set points.
+
+```{r RASS-1c, echo=F, message = F, warning=F, cache = TRUE}
+modelsummary(list(
+  feols(u ~ hdd + hdd:GRADE.max + hdd:ethnicity + hdd:avginc1000  | IDENT, weights=~d, data = all09.use.pooled, warn = F) , # Do redlined areas have diff. responses cond. on setpoint
+  feols(u ~ hdd + hdd:GRADE.max + hdd:ethnicity + hdd:NITESET + hdd:avginc1000 | IDENT, weights=~d, data = all09.use.pooled, warn = F) , # Do redlined areas have diff. responses cond. on setpoint
+  feols(u ~ hdd + hdd:GRADE.max + hdd:ethnicity + hdd:DAYSET + hdd:avginc1000  | IDENT, weights=~d, data = all09.use.pooled, warn = F)  ,# Or daytime setting
+  feols(u ~ hdd + hdd:GRADE.max + hdd:ethnicity + hdd:NITESET + hdd:DAYSET + hdd:avginc1000 | IDENT, weights=~d, data = all09.use.pooled, warn = F)
+  # Not enough observations - feols(u ~ hdd + hdd:GRADE.max:ethnicity + hdd:ethnicity + hdd:NITESET + hdd:DAYSET + hdd:avginc1000 | IDENT, weights=~d, data = all09.use.pooled, warn = F) 
+), 
+stars = T,
+title = 'Regression of electricity consumption on heating degree days, interacted with HOLC grade, ethnicity, and income, conditional on thermostat setpoint\\label{tab:electricresponsethemset2}',
+notes = c('Using only households with electricity as primary heating fuel','Omitted grade is "C"'),
+output = 'kableExtra') %>%
+  kable_styling(latex_options = 'scale_down')
+
+
+          # doesn't look so great when cdd.e is included as its missing for many
+          # this is just electric; what about g?
+```  
+
+Results surprisingly show that Black households with electricity as a primary heating fuel have lower responses to increases in heating degree days 
+relative to White households in two of the four specifications. 
+A similar effect holds for Hispanic households, though in no specifications are the results statistically significant
+for Hispanic households. Conditioning on separate effects for nighttime and daytime thermostat setpoints reduces the magnitude of the
+coefficient of response for households in HOLC grade red (D), but the point estimate is still positive. 
+
+
+```{r RASS-1cgas, echo=F, message = F, warning = F, cache = TRUE}
+
+
+modelsummary(list(
+  feols(u ~ hdd + hdd:GRADE.maxl + hdd:ethnicity + hdd:avginc1000               | IDENT, weights=~d, data = all09.use.pooled.g, warn = F) , # Do redlined areas have diff. responses cond. on setpoint
+  feols(u ~ hdd + hdd:GRADE.maxl + hdd:ethnicity + hdd:NITESET + hdd:avginc1000 | IDENT, weights=~d, data = all09.use.pooled.g, warn = F) , # Do redlined areas have diff. responses cond. on setpoint
+  feols(u ~ hdd + hdd:GRADE.maxl + hdd:ethnicity + hdd:DAYSET + hdd:avginc1000  | IDENT, weights=~d, data = all09.use.pooled.g, warn = F)  ,# Or daytime setting
+  feols(u ~ hdd + hdd:GRADE.maxl + hdd:ethnicity + hdd:NITESET + hdd:DAYSET + hdd:avginc1000 | IDENT, weights=~d, data = all09.use.pooled.g, warn = F)
+  # NOt enough observations - feols(u ~ hdd + hdd:GRADE.max:ethnicity + hdd:ethnicity + hdd:NITESET + hdd:DAYSET + hdd:avginc1000 | IDENT, weights=~d, data = all09.use.pooled, warn = F) 
+), stars = T, 
+title = 'Regression of gas consumption on heating degree days, interacted with HOLC grade, ethnicity, and income, conditional on thermostat setpoint\\label{tab:gasresponsethemset2}',
+output = 'kableExtra',
+notes = c('Using only households with natural gas as primary heating fuel','Omitted grade is "C"')) %>%
+  kable_styling(latex_options = 'scale_down')
+```
+
+Table \ref{tab:gasresponsethemset2} shows an insufficient number of gas households in HOLC grade D (red) areas which precludes us from seeing the effect of HOLC red on response to heating degree days.
+Results focused on ethnicity show that Hispanic households are less responsive to heating degree days conditional on daytime and nighttime 
+thermostat setpoints. A similar result for Black households is not significant.\cite{Reames2016} \cite{Baxter1998}
+
+
+Should be a bib here
+\printbibliography
+
+<div id="refs"></div>
+
+# Appendix
+\appendix
+
+Apx text
+
+```{r render, eval=F}
+  rmarkdown::render(rstudioapi::getSourceEditorContext()$path, 
+                    output_file = paste0(format(Sys.time(), '%F--%H%M'), '_', gsub(pattern = '\\.R', '.pdf', 
+                                                                                   basename(rstudioapi::getSourceEditorContext()$path))))
+
+```
+
+
+

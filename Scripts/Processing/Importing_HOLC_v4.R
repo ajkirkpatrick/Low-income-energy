@@ -40,6 +40,7 @@ require(tigris)
 require(mapview)
 require(geojsonsf)
 require(censusapi)
+require(acs) #--> new innovation. Better looking up using acs.lookup(table.name = 'FUEL', case.sensitive=F)
 options(tigris_use_cache = TRUE)
 
 # tigris cache, for future ref (can add .zip files manually! folder is hidden, type in address using 'save as...') C:\Users\ajk41\AppData\Local\tigris
@@ -582,6 +583,8 @@ HOLC = HOLC %>% st_join(FIPS %>% dplyr::select(STATEFP, COUNTYFP), largest=T) %>
 # lv = load_variables(dataset = 'acs5', year=2018, cache=TRUE)
 # lv %>% dplyr::filter(grepl('HEAT', concept, ignore.case = T))
 
+##!! NOTE: acs package has ways of combining (correctly) the block.group levels. See the 2014 pdf at the end!!! Make a HOLC-nbhd defined collection of BG's and combine that way, then query using acs.fetch instead of Tidycensus?
+
 
 using.fips = unique(HOLC[,c('STATEFP','COUNTYFP','STCO')] %>% st_set_geometry(NULL) %>% dplyr::filter(!is.na(STATEFP)))
  
@@ -651,7 +654,9 @@ ZCTA = ZCTA %>% dplyr::select(-contains(c('B250','B020','B190'))) %>% dplyr::fil
 
 BG = BG %>%
   dplyr::mutate(OtherRace = NativeAmerican+NativeHawaiian+OtherRaceOne+TwoOrMore+TwoOrMoreOther+ThreeOrMore) %>%
-  dplyr::mutate(OtherSubstandard = Coal + Wood + OtherFuel + NoFuel,
+  dplyr::mutate(OtherSubstandard = Coal + Wood + LPGas + OtherFuel + NoFuel,
+                OtherSubstandardNarrow = Coal + NoFuel,
+                OtherSubstandardMed = Coal + LPGas + FuelOil + OtherFuel + NoFuel,
                 OtherSubstandardWide = Coal + Wood + OtherFuel + LPGas + FuelOil + NoFuel) %>%
   dplyr::select(-Coal, -Wood, -OtherFuel, -NoFuel, -NativeAmerican, -NativeHawaiian, -OtherRaceOne, -TwoOrMore, -TwoOrMoreOther, -ThreeOrMore) %>%
   dplyr::select(STATEFP:NAME.x, UtilityGas:Solar, OtherSubstandard:OtherSubstandardWide, White:Asian, OtherRace, MedIncome2018, TotalFuel, TotalRace)
@@ -659,7 +664,9 @@ BG = BG %>%
 
 ZCTA = ZCTA %>%
   dplyr::mutate(OtherRace = NativeAmerican+NativeHawaiian+OtherRaceOne+TwoOrMore+TwoOrMoreOther+ThreeOrMore) %>%
-  dplyr::mutate(OtherSubstandard = Coal + Wood + OtherFuel + NoFuel,
+  dplyr::mutate(OtherSubstandard = Coal + Wood + LPGas + OtherFuel + NoFuel,
+                OtherSubstandardNarrow = Coal + NoFuel,
+                OtherSubstandardMed = Coal + LPGas + FuelOil + OtherFuel + NoFuel,
                 OtherSubstandardWide = Coal + Wood + OtherFuel + LPGas + FuelOil + NoFuel) %>%
   dplyr::select(-Coal, -Wood, -OtherFuel, -NoFuel, -NativeAmerican, -NativeHawaiian, -OtherRaceOne, -TwoOrMore, -TwoOrMoreOther, -ThreeOrMore) %>%
   dplyr::select(GEOID:NAME.zip, UtilityGas:Solar, OtherSubstandard:OtherSubstandardWide, White:Asian, OtherRace, MedIncome2018, TotalFuel, TotalRace)
