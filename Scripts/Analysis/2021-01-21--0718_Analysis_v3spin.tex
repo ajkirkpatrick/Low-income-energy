@@ -1,0 +1,843 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\hypersetup{
+  pdftitle={Energy Insecurity and Redlined America},
+  pdfauthor={A. Justin Kirkpatrick},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+\urlstyle{same} % disable monospaced font for URLs
+\usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\usepackage{bbm}
+\usepackage{threeparttable}
+\usepackage{float}
+\usepackage{booktabs}
+
+\title{Energy Insecurity and Redlined America}
+\author{A. Justin Kirkpatrick}
+\date{2021-01-21}
+
+\begin{document}
+\maketitle
+
+This is a report generated by \texttt{knitr::spin()}
+
+\hypertarget{introduction}{%
+\section{Introduction}\label{introduction}}
+
+This is the section with the introduction
+
+\hypertarget{details-and-description}{%
+\subsection{Details and description}\label{details-and-description}}
+
+\hypertarget{define-energy-burden.}{%
+\paragraph{Define energy burden.}\label{define-energy-burden.}}
+
+\hypertarget{cite-severity-of-problem}{%
+\paragraph{Cite severity of problem}\label{cite-severity-of-problem}}
+
+\hypertarget{link-between-energy-burden-and-energy-efficiency}{%
+\paragraph{Link between energy burden and energy
+efficiency}\label{link-between-energy-burden-and-energy-efficiency}}
+
+\hypertarget{obvious-reason-being-poor-and-short-sighted}{%
+\paragraph{Obvious reason: being poor and
+short-sighted}\label{obvious-reason-being-poor-and-short-sighted}}
+
+\hypertarget{conditional-on-income-problem-still-persists}{%
+\paragraph{Conditional on income, problem still
+persists!}\label{conditional-on-income-problem-still-persists}}
+
+\hypertarget{potential-explanations-brief}{%
+\paragraph{Potential explanations
+(brief)}\label{potential-explanations-brief}}
+
+This section is brief. Full literature review comes later. Or maybe the
+full lit for why is here?
+
+\hypertarget{causal-chain-is-really-long}{%
+\paragraph{Causal chain is really
+long}\label{causal-chain-is-really-long}}
+
+\hypertarget{potential-chain-redlining-lack-of-ownership-why-stay-in-area}{%
+\paragraph{Potential chain (redlining--\textgreater{} lack of ownership
+--\textgreater{} why stay in
+area?)}\label{potential-chain-redlining-lack-of-ownership-why-stay-in-area}}
+
+\hypertarget{this-paper-here}{%
+\subsection{This paper here\ldots{}}\label{this-paper-here}}
+
+\hypertarget{explores-the-role-of-redlining-in-explaining-energy-burden}{%
+\paragraph{Explores the role of redlining in explaining energy
+burden}\label{explores-the-role-of-redlining-in-explaining-energy-burden}}
+
+By isolating the energy outcomes that can only be explained by redlining
+
+\hypertarget{plausibly-exogenous-variation}{%
+\paragraph{Plausibly exogenous
+variation}\label{plausibly-exogenous-variation}}
+
+Conditional on similar (but not red-lined) nearby neighborhoods.
+Observables.
+
+\hypertarget{extracted-1930s-data-to-understand-redlining}{%
+\paragraph{Extracted 1930's data to understand
+redlining}\label{extracted-1930s-data-to-understand-redlining}}
+
+Survey data created by federal HOLC employees in 1936-1939 provides
+neighborhood-specific data on observable characteristics that can be
+used to identify the effects of redlining. The designation of red- and
+yellow-lined areas (as well as green and blue) aggregate away important
+variation between each grading. Not all redlined areas are identical,
+nor are all yellow areas. Survey data recorded as part of the redline
+designation process provides important, but largely unusued, sources of
+variation. Within-grade variation in housing is common with reported
+average rents, median income, repair status of housing, share of housing
+developed, and construction type. Prior to being redlined, areas with
+high percentages of low-income or minority populations were more likely
+to have lower rents and lower housing quality. Frequently, the reason
+for a low-income or minority area's location was associated with the
+quality of the geography or proximity to natural features - low-lying
+areas that frequently flooded or areas too steep for conventional
+building were generally populated by lower-income individuals. These
+same features also foment low investment in housing stock, and can
+explain current inefficiencies in housing regardless of the HOLC grade.
+With HOLC survey data in hand, I can control for these features and
+separate out the effect of HOLC redlining from the determinants of HOLC
+grading.
+
+\hypertarget{identification-key-there-are-neighborhoods-with-identical-economics-and-racial-composition-where-some-surveyors-designated-them-red-and-some-designated-yellow.}{%
+\paragraph{Identification key: there are neighborhoods with identical
+economics and racial composition where some surveyors designated them
+red and some designated
+yellow.}\label{identification-key-there-are-neighborhoods-with-identical-economics-and-racial-composition-where-some-surveyors-designated-them-red-and-some-designated-yellow.}}
+
+\hypertarget{poor-whites-vs.-poor-blacks}{%
+\paragraph{Poor whites vs.~poor
+blacks}\label{poor-whites-vs.-poor-blacks}}
+
+\hypertarget{historic-data-merged-to-block-groups-to-leverage-modern-outcomes}{%
+\paragraph{Historic data merged to block groups to leverage modern
+outcomes}\label{historic-data-merged-to-block-groups-to-leverage-modern-outcomes}}
+
+To assess current energy outcomes, I merge original HOLC neighborhoods
+to modern census block groups, extracting ACS and census indicators of
+high energy burden. Census block groups match the granularity of HOLC
+neighborhoods reasonably well. However, boundaries do not tend to
+coincide exactly, requiring some aggregation. Once linked, I compare
+modern energy outcomes with HOLC grading, conditioning on observable
+characteristics both in the 1930's (selection), and in the present.
+While an individual household-level analysis would provide the clearest
+evidence, household-level energy consumption data is limited for privacy
+reasons, especially at the spatial resolution of HOLC neighborhoods,
+which can have as few as 100 homes in them.
+
+\hypertarget{section}{%
+\paragraph{}\label{section}}
+
+\hypertarget{data}{%
+\section{Data}\label{data}}
+
+This is the section with the data. And the section where we process the
+data
+
+\hypertarget{census-blockgroups}{%
+\subsubsection{Census blockgroups}\label{census-blockgroups}}
+
+HOLC grading and survey data are available at the neighborhood level,
+where the average neighborhood size is approximately 0.72 {[}m\^{}2{]}
+square kilometers.
+
+\hypertarget{energy-burden}{%
+\subsubsection{Energy burden}\label{energy-burden}}
+
+I first examine the incidence of energy burden on minority populations.
+A model of home selection would clearly predict a relationship between
+energy burden and income as low-income individuals trade off energy
+efficient (yet higher cost) housing for lower-cost but
+energy-inefficient housing. Since a home's energy efficiency is part of
+a bundle of attributes, households with low income may often trade
+energy efficiency for other properties, such as larger square footage.
+Lower efficiency homes may be more expensive to heat to a comfortable
+standard. However, households with severe budget constraints may select
+a low-efficiency house and select to spend as little as possible on
+heating, resulting in very low inside temperatures, lower housing costs,
+and low energy expenditures.
+
+To show the relationship between home energy efficiency and income, I
+regress the fraction of households reporting substandard heating
+technology (coal, wood, fuel oil, or ``other''??) in a census block
+group on measures of income using the following specification:
+
+\begin{eqnarray*}
+SubstandardHeating_{i} = \beta_0 + \beta_1 MedInc_i + \beta_2 xxx_i + \epsilon_i \\ \nonumber
+\end{eqnarray*}
+
+\begin{table}
+
+\caption{\label{tab:unnamed-chunk-2}Share of Households with OtherSubstandard Fuel (Coal, wood, LP gas, other, and none)}
+\centering
+\resizebox{\linewidth}{!}{
+\begin{tabular}[t]{lccc}
+\toprule
+  & Model 1 & Model 2 & Model 3\\
+\midrule
+MedIncome2018 & -0.00060** & -0.00019* & -0.00018\\
+ & (0.00024) & (0.00011) & (0.00011)\\
+Black & -0.12194 &  & \\
+ & (0.12134) &  & \\
+White & -0.11277 &  & \\
+ & (0.11729) &  & \\
+Asian & -0.10836 &  & \\
+ & (0.12011) &  & \\
+OtherRace & -0.06279 &  & \\
+ & (0.06751) &  & \\
+MedIncome2018 × Black & 0.00031 &  & \\
+ & (0.00025) &  & \\
+MedIncome2018 × White & 0.00047** &  & \\
+ & (0.00022) &  & \\
+\midrule
+Num.Obs. & 32403 & 18573 & 13170\\
+R2 & 0.245 & 0.267 & 0.287\\
+R2 Adj. & 0.240 & 0.259 & 0.277\\
+R2 Within & 0.044 & 0.017 & 0.015\\
+R2 Pseudo &  &  & \\
+AIC & -109852.6 & -59991.5 & -41706.4\\
+BIC & -107999.3 & -58425.6 & -40269.1\\
+Log.Lik. & 55147.296 & 30195.737 & 21045.196\\
+FE: STCO & X & X & X\\
+Std. errors & Clustered (STCO) & Clustered (STCO) & Clustered (STCO)\\
+\bottomrule
+\multicolumn{4}{l}{\textsuperscript{} * p < 0.1, ** p < 0.05, *** p < 0.01}\\
+\multicolumn{4}{l}{\textsuperscript{} Robust SE clustered by FIPS county}\\
+\end{tabular}}
+\end{table}
+\begin{table}
+
+\caption{\label{tab:unnamed-chunk-3}Share of Households with OtherSubstandardMed Fuel (Coal, LP gas, Fuel Oil, other, and none)}
+\centering
+\resizebox{\linewidth}{!}{
+\begin{tabular}[t]{lccc}
+\toprule
+  & Model 1 & Model 2 & Model 3\\
+\midrule
+MedIncome2018 & -0.00112*** & -0.00024* & -0.00024*\\
+ & (0.00034) & (0.00013) & (0.00014)\\
+Black & -0.20809* &  & \\
+ & (0.11769) &  & \\
+White & -0.20479* &  & \\
+ & (0.11938) &  & \\
+Asian & -0.18858* &  & \\
+ & (0.11078) &  & \\
+OtherRace & -0.07260 &  & \\
+ & (0.06890) &  & \\
+MedIncome2018 × Black & 0.00070** &  & \\
+ & (0.00031) &  & \\
+MedIncome2018 × White & 0.00118*** &  & \\
+ & (0.00042) &  & \\
+\midrule
+Num.Obs. & 32403 & 18573 & 13170\\
+R2 & 0.634 & 0.642 & 0.650\\
+R2 Adj. & 0.632 & 0.639 & 0.645\\
+R2 Within & 0.038 & 0.009 & 0.008\\
+R2 Pseudo &  &  & \\
+AIC & -72873.6 & -38849.0 & -26845.5\\
+BIC & -71020.3 & -37283.1 & -25408.2\\
+Log.Lik. & 36657.787 & 19624.511 & 13614.748\\
+FE: STCO & X & X & X\\
+Std. errors & Clustered (STCO) & Clustered (STCO) & Clustered (STCO)\\
+\bottomrule
+\multicolumn{4}{l}{\textsuperscript{} * p < 0.1, ** p < 0.05, *** p < 0.01}\\
+\multicolumn{4}{l}{\textsuperscript{} Robust SE clustered by FIPS county}\\
+\end{tabular}}
+\end{table}
+
+\hypertarget{results}{%
+\paragraph{Results}\label{results}}
+
+First table is using OtherSubstandard. Second is OtherSubstandardMed
+(incl.~fuel oil)
+
+Nothing good to report here on the first. High income, as expected,
+means less likely to have substandard heating (median income; percent in
+block-group).
+
+\begin{table}[H]
+\centering\begin{table}[H]
+\centering
+\resizebox{\linewidth}{!}{
+\begin{tabular}[t]{lcccccccc}
+\toprule
+  & Model 1 & Model 2 & Model 3 & Model 4 & Model 5 & Model 6 & Model 7 & Model 8\\
+\midrule
+as.factor(GRADE.max)D & 0.00348** & 0.00338** & 0.00477** & 0.00383** & 0.00441*** & 0.00533*** & 0.00263 & 0.00515*\\
+ & (0.00158) & (0.00159) & (0.00189) & (0.00155) & (0.00122) & (0.00181) & (0.00176) & (0.00302)\\
+as.factor(GRADE.max)B & -0.00040 & -0.00032 & -0.00062 & -0.00031 & 0.00039 & -0.00066 & 0.00303 & 0.00777\\
+ & (0.00112) & (0.00120) & (0.00147) & (0.00099) & (0.00146) & (0.00121) & (0.00385) & (0.01007)\\
+as.factor(GRADE.max)A & 0.00025 & -0.00053 & -0.00571 & -0.00075 & -0.00004 & -0.00594 & -0.00414 & -0.02233\\
+ & (0.00343) & (0.00338) & (0.00510) & (0.00332) & (0.00365) & (0.00504) & (0.00890) & (0.01409)\\
+MedIncome2018 & -0.00009*** & -0.00010*** & -0.00011*** & -0.00012*** & -0.00012*** & -0.00013*** & -0.00017*** & -0.00023***\\
+ & (0.00002) & (0.00002) & (0.00002) & (0.00002) & (0.00002) & (0.00002) & (0.00003) & (0.00005)\\
+MedIncome1936 & 0.00026** & 0.00003 & 0.00006 & 0.00009 & 0.00007 & 0.00012 & -0.00014 & -0.00024\\
+ & (0.00011) & (0.00014) & (0.00014) & (0.00014) & (0.00015) & (0.00015) & (0.00066) & (0.00107)\\
+Rent3739\_Mean & 0.00007* & 0.00007* & 0.00005 & 0.00006* & 0.00006* & 0.00005 & 0.00003 & 0.00005\\
+ & (0.00004) & (0.00003) & (0.00005) & (0.00003) & (0.00003) & (0.00005) & (0.00002) & (0.00005)\\
+MedIncome2018 × MedIncome1936 &  & 0.00000** & 0.00000*** & 0.00000*** & 0.00000** & 0.00000** & 0.00001 & 0.00003\\
+ &  & (0.00000) & (0.00000) & (0.00000) & (0.00000) & (0.00000) & (0.00001) & (0.00002)\\
+Black &  &  &  & -0.00219 & -0.00115 & -0.00104 & -0.00541 & -0.00688\\
+ &  &  &  & (0.00455) & (0.00577) & (0.00481) & (0.00930) & (0.01490)\\
+White &  &  &  & 0.00304 & 0.00303 & 0.00464 & 0.00648 & 0.00890\\
+ &  &  &  & (0.00436) & (0.00454) & (0.00527) & (0.00805) & (0.01295)\\
+Asian &  &  &  & -0.00011 & 0.00001 & 0.00108 & -0.00326 & -0.00356\\
+ &  &  &  & (0.00451) & (0.00490) & (0.00523) & (0.01133) & (0.01692)\\
+as.factor(GRADE.max)D × Black &  &  &  &  & -0.00199 &  &  & \\
+ &  &  &  &  & (0.00411) &  &  & \\
+as.factor(GRADE.max)B × Black &  &  &  &  & -0.00285 &  &  & \\
+ &  &  &  &  & (0.00273) &  &  & \\
+as.factor(GRADE.max)A × Black &  &  &  &  & -0.00573 &  &  & \\
+ &  &  &  &  & (0.01121) &  &  & \\
+NBlack\_YN &  &  &  &  &  &  & -0.00211 & 0.00131\\
+ &  &  &  &  &  &  & (0.00316) & (0.00371)\\
+NBlack\_PCT &  &  &  &  &  &  & -0.00000 & -0.00002\\
+ &  &  &  &  &  &  & (0.00004) & (0.00005)\\
+\midrule
+Num.Obs. & 4629 & 4629 & 3313 & 4629 & 4629 & 3313 & 1034 & 690\\
+R2 & 0.097 & 0.098 & 0.097 & 0.101 & 0.101 & 0.100 & 0.100 & 0.111\\
+R2 Adj. & 0.086 & 0.087 & 0.081 & 0.089 & 0.089 & 0.084 & 0.052 & 0.049\\
+R2 Within & 0.021 & 0.021 & 0.026 & 0.025 & 0.025 & 0.030 & 0.032 & 0.044\\
+R2 Pseudo &  &  &  &  &  &  &  & \\
+AIC & -22109.1 & -22110.3 & -15583.4 & -22120.6 & -22115.8 & -15590.5 & -4692.8 & -3006.6\\
+BIC & -21742.0 & -21736.8 & -15235.4 & -21727.7 & -21703.7 & -15224.2 & -4426.0 & -2797.9\\
+Log.Lik. & 11111.557 & 11113.148 & 7848.704 & 11121.281 & 11121.917 & 7855.252 & 2400.393 & 1549.309\\
+FE: STCO & X & X & X & X & X & X & X & X\\
+Std. errors & Clustered (STCO) & Clustered (STCO) & Clustered (STCO) & Clustered (STCO) & Clustered (STCO) & Clustered (STCO) & Clustered (STCO) & Clustered (STCO)\\
+\bottomrule
+\multicolumn{9}{l}{\textsuperscript{} * p < 0.1, ** p < 0.05, *** p < 0.01}\\
+\multicolumn{9}{l}{\textsuperscript{} Robust SE clustered by FIPS county}\\
+\end{tabular}}
+\end{table}
+\end{table}
+
+\hypertarget{results-1}{%
+\paragraph{Results}\label{results-1}}
+
+Columns 1, 2, 3, and 5 show results using all blockgroups with greater
+than 80\% of total area contained within one HOLC grade. Columns 4, 6,
+and 8 set the threshold at 95\%. Column 1 allows an additive effect for
+median income in 2018 and 1936 (reported from HOLC surveys), while 2-6
+allow an interaction.
+
+As expected, current median blockgroup income predicts a lower share of
+homes with substandard heating fuel across all models. Median income in
+1936 predicts \textbf{higher} prevalance of substandard heating in
+higher 1936 median income areas. Can I explain this?
+
+Columns 4-7 include controls for current racial composition. These
+results consistently find that higher percentages of Blacks are
+associated with lower likelihood of substandard heating fuel.
+\textbf{EXPLAIN!!}
+
+The coefficient on HOLC Grade D is positive and significant across all
+specifications, indicating that, conditional on a rich set of controls
+including 1936 characteristics to control for selection, areas that were
+graded ``D'' by the HOLC are more likely to have substandard heating
+fuels in 2018 relative to those graded ``C''.
+
+\hypertarget{results-using-zip-code-tabulation-area-zcta}{%
+\subsubsection{Results using Zip Code Tabulation Area
+(ZCTA)}\label{results-using-zip-code-tabulation-area-zcta}}
+
+Zipcode Tabulation Areas are coarser than census blockgroups. Due to
+this, there are fewer ZCTAs that fall predominantly in one HOLC grade,
+resulting in a smaller sample size. Of the 2,842 zip codes that touch on
+one or more HOLC neighborhoods, 45 zip codes have greater than 80\%
+within one HOLC grade. Of these, 19 are Grade D (red). Of these, only 2
+zip code(s) have HOLC survey data including median income, presence of
+minorities, and rent data for 1936-38. This precludes the use of zip
+code aggregations to estimate HOLC grading on current substandard
+heating fuel.
+
+\hypertarget{household-level-energy}{%
+\subsubsection{Household-level energy}\label{household-level-energy}}
+
+Aggregation can mask important heterogeneity in household energy
+consumption. We use household-level monthly consumption data geolocated
+to the zip-code level to identify HOLC-zone specific energy consumption
+responses to cooling and heating events.
+
+Household energy consumption data is retrieved from the California
+Residential Appliance Saturation Survey (RASS) for 2009 and (hopefully)
+2019. The RASS is commissioned by the California Public Utilities
+Commission and implemented by DNV GL Energy Insights. The survey
+contains information on household energy consumption including home age,
+primary heating fuel source, and thermostat setpoint. The survey also
+includes the household's zip code, household characteristics including
+income and number of children, and merges two years of billing
+information obtained direclty from the gas and electric utilities
+serving the household. The survey sample consists of 25721 households
+sampled from all over California.
+
+We are interested in household's energy consumption response to
+increases in heating degree days. We focus on households that rely
+primarily on electric heating. For each household, we estimate a
+consumption response function that summarizes the household's change in
+electricity consumption per change in monthly heating degree days. This
+measure will be larger if a household consumes more energy when
+temperatures are lower, and smaller if a household consumes less energy
+when temperatures drop. I allow this response to vary bsed on the HOLC
+grade that covers the plurality of the zip code in which the household
+lies. I use only those zip codes in which greater than 80\% of the zip
+code is within one specific HOLC grade.
+
+\emph{A priori}, it is not clear whether the interaction of heating
+degree days and HOLC-designated redlining should be positive or
+negative. If a household prefers to remain warm and comfortable on a
+cold night, then expenditures will be higher when temperatures are
+lower. Similarly, if a household in a redlined area maintains the same
+indoor temperature setpoint but has a home with lower energy ratings or
+is otherwise less efficient, then energy expenditures will be greater as
+well. If expenditures are not greater, then it may be that the household
+trades off comfort by lowering the indoor temperature in order to keep
+expenditures low, or it may be that the home is very efficient, and more
+energy is not needed to maintain a constant temperature. This ambiguity
+confounds interpretation of estimates.
+
+Table (below) reports the results from a regression of the form:
+
+\[hdd^e_h = \beta_0 + \sum 1(grade_h=g)\beta_g + \beta_{inc} avgincome_h + cdd^e_h + \gamma^{CZ} + \varepsilon\]
+
+Where \(hdd^e\) is the electricity consumption response to one
+additional heating degree day for household \(h\) located in HOLC grade
+\(g\). \(cdd^e\) is the household's electricity consumption response to
+an additional cooling degree day. Table (below that) shows results for
+\(hdd^g\). \(\gamma^{CZ}\) are climate-zone fixed effects.
+
+\begin{table}[H]
+\centering
+\begin{tabular}[t]{lcc}
+\toprule
+  & Model 1 & Model 2\\
+\midrule
+as.factor(GRADE.max)D & 0.290*** & -0.057\\
+ & (0.049) & (0.042)\\
+as.factor(GRADE.max)X & 0.227*** & 0.240***\\
+ & (0.029) & (0.040)\\
+avginc & 0.000 & 0.000\\
+ & (0.000) & (0.000)\\
+cdd.e &  & 0.002\\
+ &  & (0.003)\\
+\midrule
+Num.Obs. & 14822 & 9220\\
+R2 & 0.107 & 0.109\\
+R2 Adj. & 0.107 & 0.108\\
+R2 Within & 0.004 & 0.007\\
+R2 Pseudo &  & \\
+AIC & 13135.9 & 7592.6\\
+BIC & 13227.2 & 7685.3\\
+Log.Lik. & -6555.968 & -3783.290\\
+FE: CZT24 & X & X\\
+Std. errors & Clustered (CZT24) & Clustered (CZT24)\\
+\bottomrule
+\multicolumn{3}{l}{\textsuperscript{} * p < 0.1, ** p < 0.05, *** p < 0.01}\\
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\begin{tabular}[t]{lcc}
+\toprule
+  & Model 1 & Model 2\\
+\midrule
+as.factor(GRADE.max)D & -4.591*** & -3.988***\\
+ & (1.194) & (0.740)\\
+avginc & 0.000 & 0.000\\
+ & (0.000) & (0.000)\\
+cdd.e &  & 0.720***\\
+ &  & (0.176)\\
+\midrule
+Num.Obs. & 988 & 988\\
+R2 & 0.206 & 0.268\\
+R2 Adj. & 0.198 & 0.260\\
+R2 Within & 0.068 & 0.141\\
+R2 Pseudo &  & \\
+AIC & 7034.5 & 6956.2\\
+BIC & 7088.3 & 7015.0\\
+Log.Lik. & -3506.238 & -3466.109\\
+FE: CZT24 & X & X\\
+Std. errors & Clustered (CZT24) & Clustered (CZT24)\\
+\bottomrule
+\multicolumn{3}{l}{\textsuperscript{} * p < 0.1, ** p < 0.05, *** p < 0.01}\\
+\end{tabular}
+\end{table}
+
+Coefficient results in Model (1) indicate that households located inside
+the HOLC red (D) areas have significantly higher gas responses, but
+significantly lower electricity responses. In each case, only households
+that report primary heating fuel of gas (first table) and electricity
+(second table) are included. The ambiguity in effect is clear in
+examining Table 2, which shows a significantly \emph{lower} effect
+within the HOLC red (D) areas.
+
+To address this confounding, I leverage the household's response to the
+question on thermostat setpoint. Conditioning on a specific overnight or
+daytime thermostat setting forecloses the possibility that households
+adjust thermostat setting since the adjustment is answered in the
+question. Household consumption response functions for those that save
+on heating by setting the thermostat setpoint very low are identified by
+variation conditional on their setpoint. By allowing each setpoint bin
+(\textless55, 55-60, 60-65, 65-70, 70-75, 75+) to have a separate
+estimate of response to heating degree days, I capture the effect of
+heating degree days separate from thermostat setpoint adjustments. Once
+properly conditioned, the difference between HOLC red and HOLC yellow
+housing can be estimated.
+
+\[usage^g_h = \beta_0 + \beta_1 hdd_h + \beta_2 hdd_h*(grade_h=D) + \beta_3 averageincome_h*hdd_h + \beta_4 cdd^e_h*hdd_h + \sum_{s=1}^{S} hdd_h*\theta^s + \kappa_h + \varepsilon\]
+
+Where \(usage^g_h\) is the monthly observed gas usage, \(hdd_h\) is the
+household's monthly heating degree days, \(s\in S\) are the temperature
+setpoint bins, and \(\kappa_h\) is a vector of household fixed effects.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# What if we pool all of the monthly bill observations? Turns out, there are very few (if any) NG-using Hh's in D!  dplyr::filter(cdd<=10 & (PHTNGCNT==1|PHTNGRAD==1))}
+\NormalTok{all09.use.pooled =}\StringTok{ }\NormalTok{all09.use }\OperatorTok{%>%}\StringTok{ }\KeywordTok{unnest}\NormalTok{(edata) }\OperatorTok{%>%}\StringTok{ }\NormalTok{dplyr}\OperatorTok{::}\KeywordTok{filter}\NormalTok{(share.max }\OperatorTok{>}\StringTok{ }\FloatTok{.90} \OperatorTok{&}\StringTok{ }\NormalTok{cdd}\OperatorTok{<=}\DecValTok{0} \OperatorTok{&}\StringTok{ }\NormalTok{(PHTELCRH}\OperatorTok{==}\DecValTok{1}\OperatorTok{|}\NormalTok{PHTELBSB}\OperatorTok{==}\DecValTok{1}\NormalTok{)) }\OperatorTok{%>%}
+\StringTok{  }\NormalTok{dplyr}\OperatorTok{::}\KeywordTok{mutate}\NormalTok{(}\DataTypeTok{NITESET =} \KeywordTok{relevel}\NormalTok{(NITESET, }\DataTypeTok{ref =} \StringTok{'>75'}\NormalTok{),}
+                \DataTypeTok{DAYSET =} \KeywordTok{relevel}\NormalTok{(DAYSET, }\DataTypeTok{ref =} \StringTok{'>75'}\NormalTok{),}
+                \DataTypeTok{ethnicity =} \KeywordTok{relevel}\NormalTok{(ethnicity, }\DataTypeTok{ref =} \StringTok{'White'}\NormalTok{),}
+                \DataTypeTok{avginc1000 =}\NormalTok{ avginc}\OperatorTok{/}\DecValTok{1000}\NormalTok{)}
+
+\KeywordTok{modelsummary}\NormalTok{(}\KeywordTok{list}\NormalTok{(}
+  \KeywordTok{feols}\NormalTok{(u }\OperatorTok{~}\StringTok{ }\NormalTok{hdd }\OperatorTok{+}\StringTok{ }\NormalTok{hdd}\OperatorTok{:}\NormalTok{GRADE.max }\OperatorTok{+}\StringTok{ }\NormalTok{hdd}\OperatorTok{:}\NormalTok{avginc }\OperatorTok{|}\StringTok{ }\NormalTok{IDENT, }\DataTypeTok{weights=}\OperatorTok{~}\NormalTok{d, }\DataTypeTok{data =}\NormalTok{ all09.use.pooled, }\DataTypeTok{warn =}\NormalTok{ F), }\CommentTok{# Do redlined areas have diff. responses?}
+  \KeywordTok{feols}\NormalTok{(u }\OperatorTok{~}\StringTok{ }\NormalTok{hdd }\OperatorTok{+}\StringTok{ }\NormalTok{hdd}\OperatorTok{:}\NormalTok{GRADE.max }\OperatorTok{+}\StringTok{ }\NormalTok{hdd}\OperatorTok{:}\NormalTok{avginc }\OperatorTok{+}\StringTok{ }\NormalTok{hdd}\OperatorTok{:}\NormalTok{cdd.e }\OperatorTok{|}\StringTok{ }\NormalTok{IDENT, }\DataTypeTok{weights=}\OperatorTok{~}\NormalTok{d, }\DataTypeTok{data =}\NormalTok{ all09.use.pooled, }\DataTypeTok{warn =}\NormalTok{ F) , }\CommentTok{# Do redlined areas have diff. responses controlling for building envelope (w/AC usage)}
+  \KeywordTok{feols}\NormalTok{(u }\OperatorTok{~}\StringTok{ }\NormalTok{hdd }\OperatorTok{+}\StringTok{ }\NormalTok{hdd}\OperatorTok{:}\NormalTok{NITESET }\OperatorTok{+}\StringTok{ }\NormalTok{hdd}\OperatorTok{:}\NormalTok{GRADE.max }\OperatorTok{+}\StringTok{ }\NormalTok{hdd}\OperatorTok{:}\NormalTok{avginc }\OperatorTok{+}\StringTok{ }\NormalTok{hdd}\OperatorTok{:}\NormalTok{cdd.e }\OperatorTok{|}\StringTok{ }\NormalTok{IDENT, }\DataTypeTok{weights=}\OperatorTok{~}\NormalTok{d, }\DataTypeTok{data =}\NormalTok{ all09.use.pooled, }\DataTypeTok{warn =}\NormalTok{ F) , }\CommentTok{# Do redlined areas have diff. responses cond. on setpoint}
+  \KeywordTok{feols}\NormalTok{(u }\OperatorTok{~}\StringTok{ }\NormalTok{hdd }\OperatorTok{+}\StringTok{ }\NormalTok{hdd}\OperatorTok{:}\NormalTok{DAYSET }\OperatorTok{+}\StringTok{ }\NormalTok{hdd}\OperatorTok{:}\NormalTok{GRADE.max }\OperatorTok{+}\StringTok{ }\NormalTok{hdd}\OperatorTok{:}\NormalTok{avginc }\OperatorTok{+}\StringTok{ }\NormalTok{hdd}\OperatorTok{:}\NormalTok{cdd.e }\OperatorTok{|}\StringTok{ }\NormalTok{IDENT, }\DataTypeTok{weights=}\OperatorTok{~}\NormalTok{d, }\DataTypeTok{data =}\NormalTok{ all09.use.pooled, }\DataTypeTok{warn =}\NormalTok{ F) ),}\CommentTok{# Or daytime setting}
+  \DataTypeTok{stars =}\NormalTok{ T)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{table}[H]
+\centering
+\begin{tabular}[t]{lcccc}
+\toprule
+  & Model 1 & Model 2 & Model 3 & Model 4\\
+\midrule
+hdd & 1.083*** & 1.068*** & 2.700*** & 2.644***\\
+ & (0.264) & (0.278) & (0.205) & (0.201)\\
+hdd × GRADE.maxD & 3.729*** & 3.821*** & 2.917*** & 3.445***\\
+ & (0.407) & (0.407) & (0.728) & (0.614)\\
+hdd × avginc & 0.000 & 0.000 & 0.000 & 0.000\\
+ & (0.000) & (0.000) & (0.000) & (0.000)\\
+hdd × cdd.e &  & -0.049 & -0.058* & -0.078*\\
+ &  & (0.036) & (0.031) & (0.044)\\
+hdd × NITESETOff &  &  & -1.348*** & \\
+ &  &  & (0.454) & \\
+hdd × NITESET55-60 &  &  & -1.418* & \\
+ &  &  & (0.769) & \\
+hdd × NITESET60-65 &  &  & -2.664*** & \\
+ &  &  & (0.693) & \\
+hdd × NITESET65-70 &  &  & -0.604 & \\
+ &  &  & (0.536) & \\
+hdd × NITESET70-75 &  &  & -1.793*** & \\
+ &  &  & (0.539) & \\
+hdd × NITESETUnk &  &  & -1.921*** & \\
+ &  &  & (0.163) & \\
+hdd × DAYSETOff &  &  &  & -1.038**\\
+ &  &  &  & (0.508)\\
+hdd × DAYSET55-60 &  &  &  & -2.035***\\
+ &  &  &  & (0.404)\\
+hdd × DAYSET60-65 &  &  &  & -2.614***\\
+ &  &  &  & (0.891)\\
+hdd × DAYSET65-70 &  &  &  & -1.333**\\
+ &  &  &  & (0.573)\\
+hdd × DAYSET70-75 &  &  &  & -1.421**\\
+ &  &  &  & (0.599)\\
+hdd × DAYSETUnk &  &  &  & -1.978***\\
+ &  &  &  & (0.204)\\
+\midrule
+Num.Obs. & 1150 & 476 & 476 & 476\\
+R2 & 0.846 & 0.902 & 0.907 & 0.906\\
+R2 Adj. & 0.824 & 0.877 & 0.881 & 0.880\\
+R2 Within & 0.089 & 0.250 & 0.285 & 0.280\\
+R2 Pseudo &  &  &  & \\
+AIC & 15451.3 & 6323.9 & 6312.9 & 6316.5\\
+BIC & 16163.0 & 6732.1 & 6746.1 & 6749.7\\
+Log.Lik. & -7584.656 & -3063.967 & -3052.463 & -3054.233\\
+FE: IDENT & X & X & X & X\\
+Std. errors & Clustered (IDENT) & Clustered (IDENT) & Clustered (IDENT) & Clustered (IDENT)\\
+\bottomrule
+\multicolumn{5}{l}{\textsuperscript{} * p < 0.1, ** p < 0.05, *** p < 0.01}\\
+\end{tabular}
+\end{table}
+
+Results have the expected sign - an increase in the heating degree days
+leads to an increase in gas consumption across each of the
+specifications. Households located inside a HOLC red (D) area show
+around two to three times the consumption per hdd relative to the
+omitteed category, Grade C. Unfortunately, too few households lie in
+HOLC areas with reported covariates necessary to control for
+unobservables that may have affected the treatment (assignment to HOLC
+red) and the current outcome (home efficiency / gas consumption per
+hdd). Column (3) and (4) control for the reported nighttime and daytime
+temperature setpoints. In both 3 and 4, the main effect remains (and
+increases in magnitude) - conditional on a target setpoint, an increase
+in \(hdd\) leads to an increase in usage. Although insignificant, the
+interaction for the two lowest bins, 55-60 and 60-65, is negative,
+indicating that an increase in \(hdd\) for households with very low
+overnight setpoints leads to smaller increases in gas consumption
+relative to the omitted category, which is ``off/other''. As expected,
+households with very high overnight setpoints (\textgreater75) have very
+high consumption responses to \(hdd\).
+
+Notably, households within the HOLC red (D) area continue to exhibit two
+to three times the consumption response relative to households in the
+omitted category, even accounting for potentially heterogeneous
+preferences for overnight temperature setpoints. This indicates that
+households in HOLC red areas are not simply consuming more energy or
+exhibiting greater preference for overnight comfort, but rather face
+higher expenditures simply to maintain one constant temperature.
+\#\#\#\# Household level energy by ethnicity This section examines the
+coefficient of response across ethnicity, as well as HOLC grade and
+thermostat set points.
+
+\begin{table}[H]
+\centering
+\begin{tabular}[t]{lcccc}
+\toprule
+  & Model 1 & Model 2 & Model 3 & Model 4\\
+\midrule
+hdd & 1.601*** & 1.188*** & 1.585*** & 1.478***\\
+ & (0.402) & (0.309) & (0.347) & (0.464)\\
+hdd × GRADE.maxD & 1.764** & 1.120 & 1.770** & 1.351\\
+ & (0.733) & (1.016) & (0.807) & (1.746)\\
+hdd × ethnicityAsian and Pacific Islander & -0.674* & -0.467 & -0.948* & -0.782\\
+ & (0.370) & (0.311) & (0.491) & (0.767)\\
+hdd × ethnicityBlack & -0.869** & -0.460* & -0.982** & -0.708\\
+ & (0.405) & (0.270) & (0.387) & (0.476)\\
+hdd × ethnicityHispanic & -0.093 & 0.211 & -0.392 & -0.435\\
+ & (0.546) & (0.511) & (0.583) & (0.943)\\
+hdd × ethnicityOther & 2.066*** & 1.905*** & 1.755** & 1.895\\
+ & (0.697) & (0.719) & (0.862) & (1.617)\\
+hdd × ethnicityMixed & 2.119*** & 2.666*** & 1.848*** & 2.972\\
+ & (0.383) & (0.662) & (0.566) & (2.169)\\
+hdd × avginc1000 & -0.002 & -0.001 & -0.001 & -0.001\\
+ & (0.003) & (0.003) & (0.003) & (0.004)\\
+hdd × NITESETOff &  & 0.563 &  & 4.544**\\
+ &  & (0.465) &  & (1.730)\\
+hdd × NITESET55-60 &  & 0.256 &  & 1.259\\
+ &  & (0.757) &  & (1.701)\\
+hdd × NITESET60-65 &  & -0.978 &  & 1.794\\
+ &  & (0.742) &  & (1.725)\\
+hdd × NITESET65-70 &  & 1.182** &  & 2.471\\
+ &  & (0.587) &  & (1.913)\\
+hdd × NITESET70-75 &  & -0.160 &  & 2.687\\
+ &  & (0.497) &  & (2.410)\\
+hdd × DAYSETOff &  &  & 0.722 & -2.292\\
+ &  &  & (0.533) & (1.536)\\
+hdd × DAYSET55-60 &  &  & -0.697 & -2.657\\
+ &  &  & (0.524) & (2.397)\\
+hdd × DAYSET60-65 &  &  & -1.239 & -4.875***\\
+ &  &  & (1.044) & (1.808)\\
+hdd × DAYSET65-70 &  &  & 0.199 & -2.311\\
+ &  &  & (0.675) & (1.485)\\
+hdd × DAYSET70-75 &  &  & 0.248 & -3.262\\
+ &  &  & (0.575) & (2.613)\\
+\midrule
+Num.Obs. & 1086 & 1086 & 1086 & 1086\\
+R2 & 0.846 & 0.848 & 0.848 & 0.837\\
+R2 Adj. & 0.824 & 0.825 & 0.825 & 0.811\\
+R2 Within & 0.095 & 0.104 & 0.107 & 0.042\\
+R2 Pseudo &  &  &  & \\
+AIC & 14625.9 & 14624.4 & 14621.6 & 14707.4\\
+BIC & 15314.6 & 15338.0 & 15335.2 & 15446.0\\
+Log.Lik. & -7174.967 & -7169.180 & -7167.811 & -7205.697\\
+FE: IDENT & X & X & X & X\\
+Std. errors & Clustered (IDENT) & Clustered (IDENT) & Clustered (IDENT) & Clustered (IDENT)\\
+\bottomrule
+\multicolumn{5}{l}{\textsuperscript{} * p < 0.1, ** p < 0.05, *** p < 0.01}\\
+\end{tabular}
+\end{table}
+
+Results surprisingly show that Black households with natural gas as a
+primary heating fuel have lower responses to increases in heating degree
+days relative to White households. A similar effect holds for Hispanic
+households, though in no specifications are the results statistically
+significant for Hispanic households. Conditioning on separate effects
+for nighttime and daytime thermostat setpoints reduces the magnitude of
+the coefficient of response for households in HOLC grade red (D), but
+the point estimate is still positive.
+
+\begin{table}[H]
+\centering
+\begin{tabular}[t]{lcccc}
+\toprule
+  & Model 1 & Model 2 & Model 3 & Model 4\\
+\midrule
+hdd & 0.326*** & 0.307*** & 0.331*** & 0.308***\\
+ & (0.082) & (0.088) & (0.090) & (0.088)\\
+hdd × GRADE.maxX & -0.093 & -0.110 & -0.122* & -0.118*\\
+ & (0.072) & (0.073) & (0.071) & (0.071)\\
+hdd × ethnicityNative American & -0.037 & -0.077 & -0.024 & -0.051\\
+ & (0.053) & (0.074) & (0.054) & (0.063)\\
+hdd × ethnicityAsian and Pacific Islander & -0.077*** & -0.066*** & -0.061** & -0.054**\\
+ & (0.029) & (0.025) & (0.027) & (0.026)\\
+hdd × ethnicityBlack & -0.069* & -0.056 & -0.054 & -0.038\\
+ & (0.038) & (0.034) & (0.033) & (0.031)\\
+hdd × ethnicityHispanic & -0.080*** & -0.063*** & -0.057** & -0.050**\\
+ & (0.028) & (0.022) & (0.026) & (0.024)\\
+hdd × ethnicityOther & 0.073 & 0.069 & 0.052 & 0.049\\
+ & (0.056) & (0.048) & (0.063) & (0.058)\\
+hdd × ethnicityMixed & -0.083** & -0.086* & -0.061* & -0.052\\
+ & (0.039) & (0.052) & (0.033) & (0.036)\\
+hdd × avginc1000 & 0.000 & 0.000 & 0.000 & 0.000\\
+ & (0.000) & (0.000) & (0.000) & (0.000)\\
+hdd × NITESETOff &  & 0.021 &  & 0.040\\
+ &  & (0.035) &  & (0.046)\\
+hdd × NITESET<55 &  & 0.007 &  & 0.068\\
+ &  & (0.053) &  & (0.071)\\
+hdd × NITESET55-60 &  & 0.112 &  & 0.145\\
+ &  & (0.090) &  & (0.115)\\
+hdd × NITESET60-65 &  & 0.043 &  & 0.054\\
+ &  & (0.037) &  & (0.053)\\
+hdd × NITESET65-70 &  & 0.052 &  & 0.045\\
+ &  & (0.039) &  & (0.048)\\
+hdd × NITESET70-75 &  & 0.028 &  & 0.032\\
+ &  & (0.039) &  & (0.052)\\
+hdd × NITESETUnk &  & -0.023 &  & -0.028\\
+ &  & (0.047) &  & (0.052)\\
+hdd × DAYSETOff &  &  & -0.014 & -0.035\\
+ &  &  & (0.039) & (0.042)\\
+hdd × DAYSET<55 &  &  & -0.063 & -0.131*\\
+ &  &  & (0.061) & (0.072)\\
+hdd × DAYSET55-60 &  &  & 0.013 & -0.062\\
+ &  &  & (0.045) & (0.072)\\
+hdd × DAYSET60-65 &  &  & 0.017 & -0.031\\
+ &  &  & (0.039) & (0.052)\\
+hdd × DAYSET65-70 &  &  & 0.069 & 0.038\\
+ &  &  & (0.055) & (0.051)\\
+hdd × DAYSET70-75 &  &  & 0.050 & 0.027\\
+ &  &  & (0.041) & (0.048)\\
+hdd × DAYSETUnk &  &  & -0.046 & \\
+ &  &  & (0.051) & \\
+\midrule
+Num.Obs. & 3564 & 3564 & 3564 & 3564\\
+R2 & 0.954 & 0.954 & 0.954 & 0.955\\
+R2 Adj. & 0.944 & 0.944 & 0.944 & 0.944\\
+R2 Within & 0.143 & 0.146 & 0.147 & 0.150\\
+R2 Pseudo &  &  &  & \\
+AIC & 38783.9 & 38786.0 & 38781.6 & 38782.2\\
+BIC & 42806.2 & 42851.6 & 42847.2 & 42884.9\\
+Log.Lik. & -18740.952 & -18735.022 & -18732.813 & -18727.119\\
+FE: IDENT & X & X & X & X\\
+Std. errors & Clustered (IDENT) & Clustered (IDENT) & Clustered (IDENT) & Clustered (IDENT)\\
+\bottomrule
+\multicolumn{5}{l}{\textsuperscript{} * p < 0.1, ** p < 0.05, *** p < 0.01}\\
+\end{tabular}
+\end{table}
+
+Here, an insufficient number of gas households in HOLC grade D (red)
+areas precludes us from seeing the effect of HOLC red on response to
+heating degree days. Results focused on ethnicity show that Hispanic
+households are less responsive to heating degree days conditional on
+daytime and nighttime thermostat setpoints. A similar result for Black
+households is not significant. Table blah blah blah \# End
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{###################}
+\CommentTok{###################}
+\CommentTok{###################}
+\end{Highlighting}
+\end{Shaded}
+
+\end{document}

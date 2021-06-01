@@ -1,0 +1,281 @@
+---
+title: "Energy Insecurity in Redlined America"
+subtitle: "AERE 2021"
+author: "A. Justin Kirkpatrick"
+institute: "Michigan State University"
+date: "June 2021<br><br><br>.font60[Generous funding provided by the Nicholas Institute at Duke]"
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    yolo: false
+    css: [default, metropolis, metropolis-fonts, "EC420_SS21.css"]
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+   
+---
+
+```{r setup, include=FALSE}
+#          browseURL('https://raw.githack.com/')
+#          browseURL('https://github.com/ajkirkpatrick/EC420MSU')
+
+
+
+options(htmltools.dir.version = FALSE)
+options("getSymbols.warning4.0"=FALSE)
+
+
+library(here) # creates absolute paths, but those won't work in html
+library(knitr)
+library(kableExtra)
+library(tidyverse)
+library(wooldridge)
+require(lubridate)
+require(scales)
+require(broom)
+require(visualize)
+
+require(wbstats)
+require(lmtest)
+require(sandwich)
+require(car)
+require(quantmod)
+require(magick)
+
+
+
+# https://yihui.org/knitr/options/
+opts_chunk$set(
+  fig.align="center",
+  #dpi=300, 
+  fig.path='figs/', # where figs are rendered
+  cache=F,
+  echo=F,
+  message = F,
+  warning = F
+  )
+
+oldgraphics = "D:/user/ajk41/Low Income Energy/Images"
+dir.create('img')
+
+texout = file.path(dirname(oldgraphics), 'TEXOUT')
+  
+```
+layout: true
+
+<div class="msu-header"></div>  
+
+
+<div style = "position:fixed; visibility: hidden">
+$$\require{color}\definecolor{yellow}{rgb}{1, 0.8, 0.16078431372549}$$
+$$\require{color}\definecolor{orange}{rgb}{0.96078431372549, 0.525490196078431, 0.203921568627451}$$
+$$\require{color}\definecolor{MSUgreen}{rgb}{0.0784313725490196, 0.52156862745098, 0.231372549019608}$$
+</div>
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  TeX: {
+    Macros: {
+      yellow: ["{\\color{yellow}{#1}}", 1],
+      orange: ["{\\color{orange}{#1}}", 1],
+      MSUgreen: ["{\\color{MSUgreen}{#1}}", 1]
+    },
+    loader: {load: ['[tex]/color']},
+    tex: {packages: {'[+]': ['color']}}
+  }
+});
+</script>
+
+<style>
+.yellow {color: #FFCC29;}
+.orange {color: #F58634;}
+.MSUGreen {color: #14853B;}
+</style>
+
+
+```{r flair_color, echo=FALSE}
+library(flair)
+yellow <- "#FFCC29"
+orange <- "#F58634"
+MSUGreen <- "#14853B"
+
+copy_to_include<-function(path, overwrite = TRUE){
+  filename.to.use = basename(path)
+  if(!grepl('png$|PNG$|jpg$|JPG$|pdf$|PDF$|gif$|GIF$', filename.to.use)) stop('Not a png or jpg or pdf')
+
+  file.copy(from = path, to = paste0('img/',filename.to.use), overwrite = overwrite)
+  return(paste0('img/',filename.to.use))
+}
+```
+
+---
+class: MSU
+# Energy Insecurity
+
+## Energy Insecurity
+> The disproportionate share of household income allocated to energy expenses with those that exceed a 10% threshold categorized as experiencing "energy insecurity." (Hernández 2015)
+
+- Drehobl and Ross (2016) find 75th percentile energy burdens above 26%.
+- Lyubich (2020) finds minority households spend more on energy
+- Doremus et al (2021) finds low-income households use more energy during weather extremes
+
+--
+
+## Energy Inequity
+
+- Reames (2016): Minority-dominated census block-groups tend to have lower (worse) energy efficiency and spend a greater total amount **for the same level of energy services relative to non-minority households**.
+
+- Drehobl and Ross (2016) using ACS data: Black and Hispanic households face higher median energy burdens, even conditional on income.
+
+--
+
+> **Energy Inequity**: "The disproportionate incidence of energy insecurity in heavily-minority areas
+relative to non-minority areas of similar income."
+
+---
+class: MSU
+# Energy Insecurity
+
+## Why?
+
+- Preferences & Sorting?
+
+  - Lower-efficiency homes are less expensive, income constraints $\rightarrow$ "coming to the nuisance" (Banzhaf, 2011)
+  - But conditional on income, do minority households prefer lower efficiency?
+  - Lower utility of heating? Lower utility of non-energy consumption?
+--
+
+
+- Current housing discrimination or heterogeneous information?
+
+  - Christensen et al (2020): Rental agents steer minority households away from low-toxic exposure properties
+  - Missing information disproportionately affects those sorting to the lower quality homes (Bakkensen and Ma, 2020; Hausman and Stolper, 2020)
+--
+
+- State dependence / hysteresis
+
+  - Historic forms of discrimination
+  - Frictions in moving costs
+
+  
+---
+class: MSU
+# Enegy Insecurity
+
+```{r graphics1, out.width = '90%', fig.cap = 'Durham, NC Redlining Map (source: URichmond Mapping Inequality)'}
+include_graphics(copy_to_include(file.path(oldgraphics, 'HOLC_example_1.png')))
+```
+
+
+
+---
+class: MSU
+# Energy Insecurity
+
+.pull-left[
+## Homeowners Loan Corporation (HOLC)
+- New Deal agency tasked with assessing mortgage risk for federal refinancing efforts
+- Surveys by local agents 1933-1939
+- Nbhds graded based on trends in area. 
+- Largely considered "subversive minorities" to be harbinger of decline and risk.
+- *De facto* discrimination in housing was widespread 
+]
+
+.pull-right[
+```{r graphics2, out.width = '120%', fig.cap = 'Example survey. (URichmond Mapping Inequality)'}
+image_crop(image_read((file.path(oldgraphics, 'C5.jpg'))), geometry_size_percent(width = 110, height = 85))
+```
+]
+
+---
+class: MSU
+# Research Question
+
+#### Energy Inequity is in part the result of a *hysteresis* effect rooted in historic housing discrimination.
+Redlining was a "critical juncture" that separated otherwise similar housing stock. Redlining acted as a Schelling "focal point" for *de facto* discrimination.
+
+- Test by examining differences in home energy services quality, measured as the .orange[*presence of sufficient heating technology*] and .orange[*energy consumption responses to cold weather shocks*], between current redlined and observably similar households.
+  - Controlling for historic and current small neighborhood characteristics
+
+--
+
+#### Future research
+- Lending discrimination debatably ended with CRA in 1977. Households able to migrate, re-sort.
+- Test for "stickiness" of neighborhood. 
+  - High non-market moving costs. 
+  - Neighborhood support, family proximity, etc.
+
+---
+class: MSU
+# Prior literature
+
+### Prior literature
+- Hoffman et al (2020) urban heat islands and redlined areas
+- Aaronson et al (2020) examined credit availability in redlined areas over 1930-1980 with RD-based analysis
+- Nardone et al (2019) asthma and redlined areas
+
+### Enlightening and incredibly inconvenient:
+Fishback, La Voice, Shertzer, and Walsh (2020) on **endogeneity of redlining designation.**
+- Used linked 1930 census address data and HOLC maps to show that redlined areas captured pre-existing economic and racial discontinuities in space.
+- Border discontinuities not smooth in unobserveds. Even large moves in boundaries would still capture pre-existing segregations.
+- Hillier (2003) no widespread proof that HOLC maps were distributed and used.
+
+
+---
+class: MSU
+# Analysis
+
+### Empirical strategy
+Acknowledging Fishback et al (2020), control for selection on observables:
+- Presence of minorities
+- Repair and quality of housing
+- Rent and income (historic and current)
+
+.orange[Assume: conditional on observables that determined selection, Grade D (red) is as good as randomly assigned]
+- Unobserved neighborhood characteristics in 1930's are no longer relevant today.
+
+### Identification of effect of redlining using observably similar HOLC neighborhoods
+- Multiple surveyors result in nearly arbitrary designation of Grade D (red) and Grade C (yellow) when "subversive minorities" were present.
+- Many Grade C (yellow) areas had more Blacks and worse home repair and trend than nearby Grade D (red).
+- Drawback: leaning on linear controls.
+  - Solution: very flexible with linear controls.
+  
+  
+---
+class: MSU
+# Data
+
+.pull-left[
+HOLC .font60[from URichmond "Mapping Inequality"]
+- 196 cities, 8,877 neighborhoods
+- Survey data processed
+  - Grade A-B-C-D
+  - Repair class
+  - Median Income 1936
+  - Mean rent 1936
+  - Presence of Blacks 1936
+]
+
+.pull-right[
+2018 ACS Block-Group
+- 44,357 BG intersect HOLC
+  - Heating fuel
+  - Racial distribution
+  - Median income 2018
+]
+
+.pull-left[
+Overlay BG with HOLC, keeping those BG that have >80% within one grade
+- Take areal average when BG covers multiple HOLC neigbhorhoods of same grade
+- 19,678 block-groups meet criteria
+]
+
+.pull-right[
+```{r showOverlay, out.width = '85%', cache = F}
+
+include_graphics(copy_to_include(file.path(texout, 'overlay4.gif')))
+
+```
+]
+

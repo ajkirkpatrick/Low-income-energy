@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Energy Insecurity in Redlined America</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="A. Justin Kirkpatrick" />
+    <link href="libs/remark-css/default.css" rel="stylesheet" />
+    <link href="libs/remark-css/metropolis.css" rel="stylesheet" />
+    <link href="libs/remark-css/metropolis-fonts.css" rel="stylesheet" />
+    <link rel="stylesheet" href="EC420_SS21.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Energy Insecurity in Redlined America
+## AERE 2021
+### A. Justin Kirkpatrick
+### Michigan State University
+### June 2021<br><br><br>.font60[Generous funding provided by the Nicholas Institute at Duke]
+
+---
+
+
+
+layout: true
+
+&lt;div class="msu-header"&gt;&lt;/div&gt;  
+
+
+&lt;div style = "position:fixed; visibility: hidden"&gt;
+`$$\require{color}\definecolor{yellow}{rgb}{1, 0.8, 0.16078431372549}$$`
+`$$\require{color}\definecolor{orange}{rgb}{0.96078431372549, 0.525490196078431, 0.203921568627451}$$`
+`$$\require{color}\definecolor{MSUgreen}{rgb}{0.0784313725490196, 0.52156862745098, 0.231372549019608}$$`
+&lt;/div&gt;
+
+&lt;script type="text/x-mathjax-config"&gt;
+MathJax.Hub.Config({
+  TeX: {
+    Macros: {
+      yellow: ["{\\color{yellow}{#1}}", 1],
+      orange: ["{\\color{orange}{#1}}", 1],
+      MSUgreen: ["{\\color{MSUgreen}{#1}}", 1]
+    },
+    loader: {load: ['[tex]/color']},
+    tex: {packages: {'[+]': ['color']}}
+  }
+});
+&lt;/script&gt;
+
+&lt;style&gt;
+.yellow {color: #FFCC29;}
+.orange {color: #F58634;}
+.MSUGreen {color: #14853B;}
+&lt;/style&gt;
+
+
+
+
+---
+class: MSU
+# Energy Insecurity
+
+## Energy Insecurity
+&gt; The disproportionate share of household income allocated to energy expenses with those that exceed a 10% threshold categorized as experiencing "energy insecurity." (Hernández 2015)
+
+- Drehobl and Ross (2016) find 75th percentile energy burdens above 26%.
+- Lyubich (2020) finds minority households spend more on energy
+- Doremus et al (2021) finds low-income households use more energy during weather extremes
+
+--
+
+## Energy Inequity
+
+- Reames (2016): Minority-dominated census block-groups tend to have lower (worse) energy efficiency and spend a greater total amount **for the same level of energy services relative to non-minority households**.
+
+- Drehobl and Ross (2016) using ACS data: Black and Hispanic households face higher median energy burdens, even conditional on income.
+
+--
+
+&gt; **Energy Inequity**: "The disproportionate incidence of energy insecurity in heavily-minority areas
+relative to non-minority areas of similar income."
+
+---
+class: MSU
+# Energy Insecurity
+
+## Why?
+
+- Preferences &amp; Sorting?
+
+  - Lower-efficiency homes are less expensive, income constraints `\(\rightarrow\)` "coming to the nuisance" (Banzhaf, 2011)
+  - But conditional on income, do minority households prefer lower efficiency?
+  - Lower utility of heating? Lower utility of non-energy consumption?
+--
+
+
+- Current housing discrimination or heterogeneous information?
+
+  - Christensen et al (2020): Rental agents steer minority households away from low-toxic exposure properties
+  - Missing information disproportionately affects those sorting to the lower quality homes (Bakkensen and Ma, 2020; Hausman and Stolper, 2020)
+--
+
+- State dependence / hysteresis
+
+  - Historic forms of discrimination
+  - Frictions in moving costs
+
+  
+---
+class: MSU
+# Enegy Insecurity
+
+&lt;div class="figure" style="text-align: center"&gt;
+&lt;img src="img/HOLC_example_1.png" alt="Durham, NC Redlining Map (source: URichmond Mapping Inequality)" width="90%" /&gt;
+&lt;p class="caption"&gt;Durham, NC Redlining Map (source: URichmond Mapping Inequality)&lt;/p&gt;
+&lt;/div&gt;
+
+
+
+---
+class: MSU
+# Energy Insecurity
+
+.pull-left[
+## Homeowners Loan Corporation (HOLC)
+- New Deal agency tasked with assessing mortgage risk for federal refinancing efforts
+- Surveys by local agents 1933-1939
+- Nbhds graded based on trends in area. 
+- Largely considered "subversive minorities" to be harbinger of decline and risk.
+- *De facto* discrimination in housing was widespread 
+]
+
+.pull-right[
+&lt;div class="figure" style="text-align: center"&gt;
+&lt;img src="figs/graphics2-1.png" alt="Example survey. (URichmond Mapping Inequality)" width="120%" /&gt;
+&lt;p class="caption"&gt;Example survey. (URichmond Mapping Inequality)&lt;/p&gt;
+&lt;/div&gt;
+]
+
+---
+class: MSU
+# Research Question
+
+#### Energy Inequity is in part the result of a *hysteresis* effect rooted in historic housing discrimination.
+Redlining was a "critical juncture" that separated otherwise similar housing stock. Redlining acted as a Schelling "focal point" for *de facto* discrimination.
+
+- Test by examining differences in home energy services quality, measured as the .orange[*presence of sufficient heating technology*] and .orange[*energy consumption responses to cold weather shocks*], between current redlined and observably similar households.
+  - Controlling for historic and current small neighborhood characteristics
+
+--
+
+#### Future research
+- Lending discrimination debatably ended with CRA in 1977. Households able to migrate, re-sort.
+- Test for "stickiness" of neighborhood. 
+  - High non-market moving costs. 
+  - Neighborhood support, family proximity, etc.
+
+---
+class: MSU
+# Prior literature
+
+### Prior literature
+- Hoffman et al (2020) urban heat islands and redlined areas
+- Aaronson et al (2020) examined credit availability in redlined areas over 1930-1980 with RD-based analysis
+- Nardone et al (2019) asthma and redlined areas
+
+### Enlightening and incredibly inconvenient:
+Fishback, La Voice, Shertzer, and Walsh (2020) on **endogeneity of redlining designation.**
+- Used linked 1930 census address data and HOLC maps to show that redlined areas captured pre-existing economic and racial discontinuities in space.
+- Border discontinuities not smooth in unobserveds. Even large moves in boundaries would still capture pre-existing segregations.
+- Hillier (2003) no widespread proof that HOLC maps were distributed and used.
+
+
+---
+class: MSU
+# Analysis
+
+### Empirical strategy
+Acknowledging Fishback et al (2020), control for selection on observables:
+- Presence of minorities
+- Repair and quality of housing
+- Rent and income (historic and current)
+
+.orange[Assume: conditional on observables that determined selection, Grade D (red) is as good as randomly assigned]
+- Unobserved neighborhood characteristics in 1930's are no longer relevant today.
+
+### Identification of effect of redlining using observably similar HOLC neighborhoods
+- Multiple surveyors result in nearly arbitrary designation of Grade D (red) and Grade C (yellow) when "subversive minorities" were present.
+- Many Grade C (yellow) areas had more Blacks and worse home repair and trend than nearby Grade D (red).
+- Drawback: leaning on linear controls.
+  - Solution: very flexible with linear controls.
+  
+  
+---
+class: MSU
+# Data
+
+.pull-left[
+HOLC .font60[from URichmond "Mapping Inequality"]
+- 196 cities, 8,877 neighborhoods
+- Survey data processed
+  - Grade A-B-C-D
+  - Repair class
+  - Median Income 1936
+  - Mean rent 1936
+  - Presence of Blacks 1936
+]
+
+.pull-right[
+2018 ACS Block-Group
+- 44,357 BG intersect HOLC
+  - Heating fuel
+  - Racial distribution
+  - Median income 2018
+]
+
+.pull-left[
+Overlay BG with HOLC, keeping those that have &gt;80% within one grade
+- Take areal average when BG covers multiple HOLC neigbhorhoods
+]
+
+.pull-right[
+&lt;img src="img/overlay4.gif" width="80%" style="display: block; margin: auto;" /&gt;
+]
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

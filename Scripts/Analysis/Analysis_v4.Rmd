@@ -1,10 +1,12 @@
 ---
 title: "Energy Insecurity and Redlined America"
-author: A. Justin Kirkpatrick
+author:
+  - name: "A. Justin Kirkpatrick"
+  - affiliation: "Michigan State University"
 output:
   bookdown::pdf_document2:
     toc: false
-    latex_engine: pdflatex
+#    latex_engine: xelatex
     keep_tex: true
     extra_dependencies: 
       bbm: null
@@ -21,6 +23,8 @@ colorlinks: true
 citecolor: blue
 linkcolor: blue
 urlcolor: blue
+thanks: "The author thanks Brian Murray and the Nicholas Institute at Duke for generous funding. Thanks to Heartland Conference 2017"
+abstract: "Placeholder abstract this doesn't seem to work probably not in the template"
 # http://www.tug.org/applications/hyperref/manual.html
 
 ---
@@ -56,6 +60,11 @@ require(scales)
 require(DescTools)
 require(broom)
 require(here)
+require(forcats)
+require(tidycensus)
+require(ggmap)
+require(gganimate)
+require(magick)
 options(tigris_use_cache = TRUE)
 
 knitr::opts_chunk$set(
@@ -70,10 +79,13 @@ knit_hooks$set(inline = function(x) {
 })
 
 cacheoption = TRUE
+
+texout = here('TEXOUT')
+dir.create(texout)
 ```
 
 
-### Thanks: Heartland 2017, Brian Murray and NicInstitute
+
 
 # Introduction
 Energy insecurity has become a growing issue amongst policymakers. The energy insecurity literature shows evidence that low-income households frequently face
@@ -272,7 +284,7 @@ Designations were not necessarily fixed by any particular characteristic and no 
 To assess current energy outcomes, I merge original HOLC neighborhoods to modern census block groups, extracting ACS and census indicators of high energy burden. Census block groups match the granularity HOLC neighborhoods reasonably well. However, boundaries do not tend to coincide exactly, requiring some aggregation.  Once linked, I compare modern energy outcomes with HOLC grading, conditioning on ervable characteristics both in the 1930's (selection), and in the present. While an individual household-level analysis would provide the clearest evidence, household-level energy consumption data is ited for privacy reasons, especially at the spatial resolution of HOLC neighborhoods, which can have as few as 100 homes in them.
 
 
-## Empirical Strategy
+# Empirical Strategy
 
 ```{r process-1, echo=FALSE, cache = TRUE, warning=F, message=F}
     
@@ -286,11 +298,12 @@ To assess current energy outcomes, I merge original HOLC neighborhoods to modern
     # mykey = "ff90006e6d5f1960ef3bbb37579766bb563b1121"
     # census_api_key(mykey, install=T)
     
-    BGZ = readRDS(jLoad(WORK.OUT, 'BG_ZCTA_HOLC_int'))
+    BGZ = readRDS(jLoad(WORK.OUT, 'BG_ZCTA_HOLC_int'))  # 4-19-2021 was update of data that wasn't...great
     BG.int.full = BGZ[[1]]
     ZCTA.int.full = BGZ[[2]]
     HOLC = BGZ[[3]] # readRDS(jLoad(WORK.OUT, 'HOLC_with_data')) # 10-12
-    
+    using.fips = unique(HOLC[,c('STATEFP','COUNTYFP','STCO')] %>% st_set_geometry(NULL) %>% dplyr::filter(!is.na(STATEFP)))
+
     # Set in Importing_HOLC_v4.R:
     #  dplyr::mutate(OtherSubstandard = Coal + Wood + LPGas + OtherFuel + NoFuel,
     #    OtherSubstandardNarrow = Coal + NoFuel,
@@ -303,12 +316,18 @@ To assess current energy outcomes, I merge original HOLC neighborhoods to modern
     # Summarize (dissolve) BG and ZCTAs and average HOLC-data within.
     #         - Hopefully a reasonable number of ~100% in A,B,C,or D.
     BG.int = BG.int.full %>% 
+      dplyr::mutate(NBlack_PCT = as.numeric(NBlack_PCT)) %>%
+      dplyr::mutate(NBlack_PCT = ifelse(NBlack_PCT >100, NBlack_PCT/10, NBlack_PCT),
+                    repair_class = factor(repair_class, levels = c('Poor','Fair','Good','Excellent'), ordered = TRUE)) %>%
       group_by_at(vars(AFFGEOID, TRACTCE, BLKGRPCE, UtilityGas:TotalRace)) %>%   # see https://github.com/r-spatial/sf/wiki/migrating
-      summarize(NBlack_YN = max(NBlack_YN, na.rm=T),
+      summarize(NBlack_YN = any(NBlack_YN, na.rm=T),
                 NBlack_PCT = weighted.mean(as.numeric(NBlack_PCT), w = segmentArea, na.rm=T),
+                Rent29_Mean = weighted.mean(Rent29_Mean, w=segmentArea, na.rm=T),
                 Rent35_Mean = weighted.mean(Rent35_Mean, w=segmentArea, na.rm=T), 
                 Rent3739_Mean = weighted.mean(Rent3739_Mean, w = segmentArea, na.rm=T), 
                 Minc = weighted.mean(Minc, w=segmentArea, na.rm=T),
+                AverageHomeAge = weighted.mean(AverageHomeAge, w = segmentArea, na.rm=T),
+                repair_class = max(repair_class, na.rm=T),
                 GRADE.A  = sum(segmentArea[GRADE=='A'], na.rm=T)/sum(segmentArea),
                 GRADE.B  = sum(segmentArea[GRADE=='B'], na.rm=T)/sum(segmentArea),
                 GRADE.C  = sum(segmentArea[GRADE=='C'], na.rm=T)/sum(segmentArea),
@@ -316,65 +335,75 @@ To assess current energy outcomes, I merge original HOLC neighborhoods to modern
                 GRADE.NA = sum(segmentArea[is.na(GRADE)], na.rm=T)/sum(segmentArea),
                 GRADE.max = replace_na(GRADE[which.max(segmentArea)], 'X'),
                 share.max = max(segmentArea, na.rm=T)/sum(segmentArea)) %>% # Note: check that no AFFGEOID are duplicated
-      dplyr::mutate(STATEFP = gsub(pattern = '.*US([0-9]{2})([0-9]{3}).*', '\\1', x=AFFGEOID),
-                    COUNTYFP = gsub(pattern = '.*US([0-9]{2})([0-9]{3}).*', '\\2', x=AFFGEOID),
-                    STCO =     gsub(pattern = '.*US([0-9]{5}).*', '\\1', x=AFFGEOID)) %>%
+      dplyr::mutate(STCO = gsub(pattern = '.*US([0-9]{5}).*', '\\1', x=AFFGEOID)) %>%
       dplyr::mutate(isD = GRADE.D>.8,
                     GRADE.max = factor(GRADE.max, levels = c('C','D','B','A','X')),
                     MedIncome1936 = Minc/1000,
-                    MedIncome2018 = MedIncome2018/1000) %>%
-      dplyr::mutate(NBlack_YN = case_when(
-        !is.finite(NBlack_YN)|is.na(NBlack_YN) ~ as.logical(NA),
-        NBlack_YN>=1 ~ TRUE,
-        NBlack_YN<1 ~ FALSE,
-        TRUE ~ NA),
-        NBlack_PCT = case_when(
-          !is.finite(NBlack_PCT)|is.na(NBlack_PCT) ~ as.numeric(NA),
-          NBlack_PCT>100 ~ NBlack_PCT/10,
-          NBlack_PCT>=0 ~ NBlack_PCT) )
-      
-      
+                    MedIncome2018 = MedIncome2018/1000) 
     
+    # add to Importing_HOLC_v5 eventually
+     BG.age = map(split(using.fips, 1:NROW(using.fips)), function(z){
+                          sfp = as.character(z$STATEFP)
+                          scp = as.character(z$COUNTYFP)
+                          #if(sfp=='12' & scp=='086') return(NA)
+                            # print(paste0(sfp, "-", scp))
+                            get_acs(state=sfp, county=scp, geography='block group', year=2018, 
+                                          variables = c('B01002_001E'), 
+                                    output='wide', geometry=F, keep_geo_vars = F) %>%  # , summary_var = 'B25040_001'
+                              dplyr::select( AFFGEOID = GEOID, MedianAge2018 = B01002_001E)
+                            })
+     
+     
+    BG.int = BG.int %>%
+      left_join(bind_rows(BG.age) %>% dplyr::mutate(AFFGEOID = paste0('1500000US',AFFGEOID)), by = 'AFFGEOID')
+      
+    BG.int$MaxRace = factor(apply(BG.int %>% ungroup() %>% st_set_geometry(NULL) %>% dplyr::select(White, Black, Asian, OtherRace), MAR = 1,
+                            function(x) {
+                              c('White','Black','Asian','OtherRace')[which.max(x)]}), levels = c('White','Black','Asian','OtherRace'))
     
-    ZCTA.int = ZCTA.int.full %>% dplyr::filter(TotalFuel>0) %>%
-      group_by_at(vars(AFFGEOID10, NAME.zip, UtilityGas:TotalRace)) %>%
-      summarize(NBlack_YN = max(NBlack_YN, na.rm=T), 
+    BG.int$MaxRace67 = factor(apply(BG.int %>% ungroup() %>% st_set_geometry(NULL) %>% dplyr::select(White, Black, Asian, OtherRace), MAR = 1,
+                            function(x) {
+                              c('White','Black','Asian','OtherRace')[which(x==max(x) & x>.67)]}), levels = c('White','Black','Asian','OtherRace'))
+    
+    BG.int$NBlack_YNnum = as.integer(BG.int$NBlack_YN)
+    
+      # move this to Importing_HOLC_v5 eventually:
+
+    
+    #4-19 ZCTA's dont' exist not sure where they were lost.
+    ZCTA.int = ZCTA.int.full %>% 
+      dplyr::filter(TotalFuel>0) %>%
+      dplyr::mutate(NBlack_PCT = as.numeric(NBlack_PCT)) %>%
+      dplyr::mutate(NBlack_PCT = ifelse(NBlack_PCT >100, NBlack_PCT/10, NBlack_PCT),
+                    repair_class = factor(repair_class, levels = c('Poor','Fair','Good','Excellent'), ordered = TRUE),
+                    AFFGEOID10 = GEOID) %>%
+      group_by_at(vars(AFFGEOID10, NAME.zip, STCO, UtilityGas:TotalRace)) %>%
+      summarize(NBlack_YN = any(NBlack_YN, na.rm=T),
                 NBlack_PCT = weighted.mean(as.numeric(NBlack_PCT), w = segmentArea, na.rm=T),
+                Rent29_Mean = weighted.mean(Rent29_Mean, w=segmentArea, na.rm=T),
                 Rent35_Mean = weighted.mean(Rent35_Mean, w=segmentArea, na.rm=T), 
                 Rent3739_Mean = weighted.mean(Rent3739_Mean, w = segmentArea, na.rm=T), 
                 Minc = weighted.mean(Minc, w=segmentArea, na.rm=T),
-                GRADE.A   = sum(segmentArea[GRADE=='A'], na.rm=T)/sum(segmentArea),
-                GRADE.B   = sum(segmentArea[GRADE=='B'], na.rm=T)/sum(segmentArea),
-                GRADE.C   = sum(segmentArea[GRADE=='C'], na.rm=T)/sum(segmentArea),
-                GRADE.D   = sum(segmentArea[GRADE=='D'], na.rm=T)/sum(segmentArea),
-                GRADE.NA  = sum(segmentArea[is.na(GRADE)], na.rm=T)/sum(segmentArea),
+                AverageHomeAge = weighted.mean(AverageHomeAge, w = segmentArea, na.rm=T),
+                repair_class = max(repair_class, na.rm=T),
+                GRADE.A  = sum(segmentArea[GRADE=='A'], na.rm=T)/sum(segmentArea),
+                GRADE.B  = sum(segmentArea[GRADE=='B'], na.rm=T)/sum(segmentArea),
+                GRADE.C  = sum(segmentArea[GRADE=='C'], na.rm=T)/sum(segmentArea),
+                GRADE.D  = sum(segmentArea[GRADE=='D'], na.rm=T)/sum(segmentArea),
+                GRADE.NA = sum(segmentArea[is.na(GRADE)], na.rm=T)/sum(segmentArea),
                 GRADE.max = replace_na(GRADE[which.max(segmentArea)], 'X'),
                 share.max = max(segmentArea, na.rm=T)/sum(segmentArea)) %>% # Note: check that no AFFGEOID are duplicated
-      st_join(counties(cb=TRUE) %>% dplyr::select(STCO = GEOID) %>% st_transform(st_crs(HOLC)), largest=TRUE) %>%
-      dplyr::mutate(STATEFP = substr(x=STCO, start=1, stop=2),
-                    COUNTYFP = substr(x = STCO, start = 3, stop=5),
-                    isD = GRADE.D>.8,
+      dplyr::mutate(isD = GRADE.D>.8,
                     GRADE.max = factor(GRADE.max, levels = c('C','D','B','A','X')),
                     MedIncome1936 = Minc/1000,
                     MedIncome2018 = MedIncome2018/1000,
-                    zip = as.character(sapply(strsplit(NAME.zip, ' '), '[', 2))) %>%
-      dplyr::mutate(NBlack_YN = case_when(
-        !is.finite(NBlack_YN)|is.na(NBlack_YN) ~ as.logical(NA),
-        NBlack_YN>=1 ~ TRUE,
-        NBlack_YN<1 ~ FALSE,
-        TRUE ~ NA),
-        NBlack_PCT = case_when(
-          !is.finite(NBlack_PCT)|is.na(NBlack_PCT) ~ as.numeric(NA),
-          NBlack_PCT>100 ~ NBlack_PCT/10,
-          NBlack_PCT>=0 ~ NBlack_PCT) )
+                    zip = AFFGEOID10)
     
     
     # stopifnot(sum(duplicated(ZCTA.int$AFFGEOID10))==0)
     stopifnot(sum(duplicated(BG.int$AFFGEOID))==0)
     stopifnot(sum(duplicated(ZCTA.int$AFFGEOID10))==0)
 ```
-    
-    
     
 ```{r process-2, echo=FALSE, cache = TRUE, warning=F, message=F}
     
@@ -389,19 +418,22 @@ To assess current energy outcomes, I merge original HOLC neighborhoods to modern
     s09 = RASS09s[,.(IDENT, servzip, avginc, homeage, HOHETH, EDUC, EUTIL, NGUTIL, CZT24, HMRNSET, HDAYSET, HEVNSET, HNITESET,
                      NAC_KWH, NAC_Therms, res, rescnt, kids, adults, seniors, NGSERV, OWNRENT, YRS_RES, BUILTYR, 
                      SQFT, PAYHEAT, PHTNGCNT, PHTNGFWL, PHTNGRAD, PHTNGFP, PHTNGOTH, PHTELBSB, PHTELCRH, PHTELCHP, 
-                     PHTELWHP, PHTELPOR, PHTELOTH, PHTBGCNT)][,c('zip','wave','ethnicity'):=list(sprintf('%05d', servzip), 2009,
-                                                                                                 factor(HOHETH, levels = c(1:7),
-                                                                                                        labels = c('Native American','Asian and Pacific Islander',
-                                                                                                                   'Black','Hispanic','White','Other','Mixed')))]
+                     PHTELWHP, PHTELPOR, PHTELOTH, PHTBGCNT, CTLACAGE)][,c('zip','wave','ethnicity','AC'):=list(sprintf('%05d', servzip), 
+                                                                                                                2009,
+                                                                                                                 factor(HOHETH, levels = c(1:7),
+                                                                                                                    labels = c('Native American','Asian and Pacific Islander',
+                                                                                                                               'Black','Hispanic','White','Other','Mixed')),
+                                                                                                                !is.na(CTLACAGE))]
     
     s19 = RASS19s[,.(IDENT, servzip, avginc, homeage, HOHETH, EDUC, EUTIL = eutil, NGUTIL, CZT24, HMRNSET, HDAYSET, HEVNSET, HNITESET,
                      NAC_KWH, NAC_Therms, res, rescnt, kids, adults, seniors, NGSERV, OWNRENT, YRS_RES, BUILTYR, 
                      SQFT, PAYHEAT, PHTNGCNT, PHTNGFWL, PHTNGRAD, PHTNGFP, PHTNGOTH, PHTELBSB, PHTELCRH, PHTELCHP, 
-                     PHTELWHP, PHTELPOR, PHTELOTH, PHTBGCNT)][,c('zip','wave','ethnicity'):=list(sprintf('%05d', servzip), 2019,
-                                                                                                 factor(HOHETH, levels = c(1:7, 97),
+                     PHTELWHP, PHTELPOR, PHTELOTH, PHTBGCNT, CTLACAGE)][,c('zip','wave','ethnicity','AC'):=list(sprintf('%05d', servzip), 2019,
+                                                                                                        factor(HOHETH, levels = c(1:7, 97),
                                                                                                         labels = c('Native American','Asian Pacific Islander',
                                                                                                                    'Black','Hispanic','White','Other','Mixed',
-                                                                                                                   'No Answer')))]
+                                                                                                                   'No Answer')),
+                                                                                                        !is.na(CTLACAGE))]
     
     
     #### Consumption data (nest to IDENT)
@@ -470,77 +502,357 @@ To assess current energy outcomes, I merge original HOLC neighborhoods to modern
 ```
                  
 
-### Home heating fuel
-To estimate the impact of redlining on current energy outcomes, I focus on two main measures: the share of homes within a census block-group that report substandard heating fuel of either \textit{coal} or \textit{none}, and the energy consumption response of households. I first examine the prevalance of substandard heating fuel. Households with substandard heating fuel face the highest cost for home heating. I estimate the following regression:
+## Home heating fuel
+To estimate the correlation of redlining with current energy outcomes, I focus on two main measures: the share of homes within a census block-group that report substandard heating fuel of either \textit{coal} or \textit{none}, and the energy consumption response of households. I first examine the prevalance of substandard heating fuel. Households with substandard heating fuel face the highest cost for home heating. I estimate the following regression:
 
 \begin{eqnarray}
 PercentSubstandard_{b} = \beta_0 + \sum_{g=1}^4 \beta_{g}^{Grade} +  \beta \mathbf{X}_b + \beta_{county} County_b + \epsilon_{b} \label{mainSubtandard1}
 \end{eqnarray}
 
-```{r substandard-est-2, echo=FALSE, fig.width=7, result='as.is', message=F, warning=F, cache = TRUE}
+```{r substandard-est-1, eval = F, echo=FALSE, fig.width=7, result='as.is', message=F, warning=F, cache = TRUE}
     
+    ### SEE NEXT CHUNK --- NOT EVAL
       # With OthersubstandardNarrow #
     BG.list1 = list(
       
       feols(fml = OtherSubstandardNarrow ~ as.factor(GRADE.max) + MedIncome2018 + MedIncome1936 + Rent3739_Mean | STCO,
-                      data = BG.int %>% dplyr::filter(share.max>.8 & !is.na(GRADE.max) & GRADE.max!='X') %>% st_set_geometry(NULL)),
+                      data = BG.int %>% dplyr::filter(share.max>.8 & !is.na(GRADE.max) & GRADE.max!='X') %>% st_set_geometry(NULL))  ,
         
       feols(fml = OtherSubstandardNarrow ~ as.factor(GRADE.max) + MedIncome2018*MedIncome1936 + Rent3739_Mean | STCO,
                       data = BG.int %>% dplyr::filter(share.max>.8 & !is.na(GRADE.max) & GRADE.max!='X') %>% st_set_geometry(NULL))  ,  
         
-      feols(fml = OtherSubstandardNarrow ~ as.factor(GRADE.max) + MedIncome2018*MedIncome1936 + Rent3739_Mean | STCO,
-                  data = BG.int %>% dplyr::filter(share.max>.95 & !is.na(GRADE.max) & GRADE.max!='X') %>% st_set_geometry(NULL)),
+      feols(fml = OtherSubstandardNarrow ~ as.factor(GRADE.max) + MedIncome2018 + MedIncome1936 + Rent3739_Mean | STCO,
+                  data = BG.int %>% dplyr::filter(share.max>.95 & !is.na(GRADE.max) & GRADE.max!='X') %>% st_set_geometry(NULL))     ,
     
-      feols(fml = OtherSubstandardNarrow ~ as.factor(GRADE.max) +  MedIncome2018*MedIncome1936 + Rent3739_Mean + Black + White + Asian | STCO, 
-                  data = BG.int %>% dplyr::filter(share.max>.8  & GRADE.max!='X') %>% st_set_geometry(NULL))  ,
+      feols(fml = OtherSubstandardNarrow ~ as.factor(GRADE.max) +  MedIncome2018+MedIncome1936 + Rent3739_Mean + MaxRace | STCO, 
+                  data = BG.int %>% dplyr::filter(share.max>.8  & GRADE.max!='X') %>% st_set_geometry(NULL))                          ,
       
-      feols(fml = OtherSubstandardNarrow ~ as.factor(GRADE.max) +  MedIncome2018*MedIncome1936 + Rent3739_Mean + Black*as.factor(GRADE.max) + White + Asian | STCO, 
-            data = BG.int %>% dplyr::filter(share.max>.8  & GRADE.max!='X') %>% st_set_geometry(NULL))  ,
+      feols(fml = OtherSubstandardNarrow ~ as.factor(GRADE.max) +  MedIncome2018*MedIncome1936 + Rent3739_Mean + MaxRace | STCO, 
+                  data = BG.int %>% dplyr::filter(share.max>.8 & GRADE.max!='X' ) %>% st_set_geometry(NULL))                         ,
       
-      feols(fml = OtherSubstandardNarrow ~ as.factor(GRADE.max) +  MedIncome2018*MedIncome1936 + Rent3739_Mean + Black + White + Asian | STCO, 
-                  data = BG.int %>% dplyr::filter(share.max>.95 & GRADE.max!='X' ) %>% st_set_geometry(NULL)),
+      feols(fml = OtherSubstandardNarrow ~ as.factor(GRADE.max) +  MedIncome2018 + MedIncome1936 + Rent3739_Mean + MaxRace | STCO, 
+            data = BG.int %>% dplyr::filter(share.max>.95  & GRADE.max!='X') %>% st_set_geometry(NULL))        ,
       
-      feols(fml = OtherSubstandardNarrow ~ as.factor(GRADE.max) +  MedIncome2018*MedIncome1936 + Rent3739_Mean + NBlack_YN + NBlack_PCT + Black + White + Asian | STCO, 
-                  data = BG.int %>% dplyr::filter(share.max>.8  & GRADE.max!='X') %>% st_set_geometry(NULL))  ,
+      feols(fml = OtherSubstandardNarrow ~ as.factor(GRADE.max) +  MedIncome2018+MedIncome1936 + Rent3739_Mean + NBlack_YN + MaxRace | STCO, 
+                  data = BG.int %>% dplyr::filter(share.max>.8  & GRADE.max!='X') %>% st_set_geometry(NULL))               ,
       
-      feols(fml = OtherSubstandardNarrow ~ as.factor(GRADE.max) +  MedIncome2018*MedIncome1936 + Rent3739_Mean + NBlack_YN + NBlack_PCT + Black + White + Asian | STCO, 
-                  data = BG.int %>% dplyr::filter(share.max>.95 & GRADE.max!='X' ) %>% st_set_geometry(NULL))
+      feols(fml = OtherSubstandardNarrow ~ as.factor(GRADE.max) +  MedIncome2018+MedIncome1936 + Rent3739_Mean + NBlack_YN*MaxRace | STCO, 
+            data = BG.int %>% dplyr::filter(share.max>.8  & GRADE.max!='X') %>% st_set_geometry(NULL))               ,
+      
+      feols(fml = OtherSubstandardNarrow ~ as.factor(GRADE.max) +  MedIncome2018*MedIncome1936 + Rent3739_Mean + NBlack_YN + MaxRace | STCO, 
+                  data = BG.int %>% dplyr::filter(share.max>.8 & GRADE.max!='X' ) %>% st_set_geometry(NULL))  ,
+      
+      feols(fml = OtherSubstandardNarrow ~ as.factor(GRADE.max) +  MedIncome2018+MedIncome1936 + Rent3739_Mean + NBlack_YN + MaxRace | STCO, 
+                  data = BG.int %>% dplyr::filter(share.max>.95 & GRADE.max!='X' ) %>% st_set_geometry(NULL)) ,
+      
+      feols(fml = OtherSubstandardNarrow ~ as.factor(GRADE.max) +  MedIncome2018+MedIncome1936 + Rent3739_Mean + NBlack_YN*MaxRace | STCO, 
+            data = BG.int %>% dplyr::filter(share.max>.95 & GRADE.max!='X' ) %>% st_set_geometry(NULL))
     )
     
     modelsummary(models = BG.list1, se = 'cluster',
                  output = 'kableExtra',  # instead of latex so that I can use kable_styling(latex_options = 'scale_down') for the table
-                 stars=TRUE, fmt = '%.5f',
-                 add_rows = tibble::tribble(~term, ~one, ~two, ~three, ~f, ~fi, ~si, ~se, ~ei,
-                                            'Block-Group HOLC Grade Threshold', '80%','80%', '95%', '80%', '80%', '95%', '80%', '95%'),
+                 stars=TRUE, fmt = '%.4f',
+                 add_rows = tibble::tribble(~term, ~one, ~two, ~three, ~f, ~fi, ~si, ~se, ~ei, ~ni, ~te, ~el,
+                                            'Block-Group HOLC Grade Threshold', '80%','80%', '95%', '80%', '80%', '95%', '80%','80%', '80%', '95%' , '95%'),
                  title = 'Share of Households with Substandard Fuel (Coal and None) by HOLC Grade\\label{tab:substandardnarrow1}',
                  notes = list('Robust SE clustered by FIPS county')) %>%  # output as kableExtra
-      kable_styling(latex_options = 'scale_down') # to use this kableExtra option!
+      kable_styling(latex_options = 'scale_down') %>% # to use this kableExtra option!
+      row_spec(15:16, color = 'red')
 ```
 
+These results reflect simple FE for STCO. Next, try regression adjustment. It's much better!
 
+```{r SubstandardOutput, echo=FALSE, fig.width=7, result='as.is', message=F, warning=F, cache = TRUE}
+    
+    
+      # With OthersubstandardNarrow #
+    BG.list2 = list(
+      
+      feols(fml = OtherSubstandardNarrow ~ as.factor(GRADE.max)   |                   STCO[MedIncome2018] +  STCO[MedIncome1936],
+                      data = BG.int %>% dplyr::filter(share.max>.8 & !is.na(GRADE.max) & GRADE.max!='X') %>% st_set_geometry(NULL))  ,  # No
+        
+      feols(fml = OtherSubstandardNarrow ~ as.factor(GRADE.max) +  repair_class |  STCO[MedIncome2018] + STCO[MedIncome1936] + STCO[Rent35_Mean],
+            data = BG.int %>% dplyr::filter(share.max>.8 & !is.na(GRADE.max) & GRADE.max!='X') %>% st_set_geometry(NULL))      ,  # Yes
+    
+      ############ NBlackYN  
+        
+      feols(fml = OtherSubstandardNarrow ~ as.factor(GRADE.max) + NBlack_YN + repair_class |             STCO[MedIncome2018] + STCO[MedIncome1936] + STCO[Rent35_Mean], 
+                  data = BG.int %>% dplyr::filter(share.max>.8  & GRADE.max!='X') %>% st_set_geometry(NULL))                          ,   # No
 
+      feols(fml = OtherSubstandardNarrow ~ as.factor(GRADE.max) + repair_class |    STCO[NBlack_YNnum] + STCO[MedIncome2018] +  STCO[MedIncome1936] +  STCO[Rent35_Mean], 
+            data = BG.int %>% dplyr::filter(share.max>.80  & GRADE.max!='X') %>% st_set_geometry(NULL))        ,  # *@.10  # Yes
+      
+      ################ MaxRace
 
-Where \textit{PercentSubstandard} is the census block-group share of households reporting substandard home heating fuel. $\beta_{g=red}^{Grade}$ is the coefficient of interest which measures the difference in share of substandard heating fuel relative to the base category, which is "yellow" (Grade C). $\mathbf{X}_b$ are controls for 2018 characteristics including median income and, in some specifications, racial composition. $\mathbf{X}_b$ also contains controls for characteristics from 1936-39 including median income, average rent, and racial characteristics. By including these historic characteristics, I control for the endogenous selection of some neighborhoods into the HOLC "red" grade. To the extent that undesirable characteristics made a neighborhood more likely to be graded as "red", income and rents will control for these characteristics. Conditional on income, rent, and racial characteristics, "red" versus "yellow" HOLC grades were as good as randomly assigned. I test this below by residualizing the variation in HOLC grades and show (hopefully) that as-good-as-random assignment appears to hold -- no other observables explain assignment into "red" versus "yellow", indicating that surveyor effects are at play in designating grade.
+      feols(fml = OtherSubstandardNarrow ~ as.factor(GRADE.max)  + MaxRace67 + repair_class|        STCO[NBlack_YNnum] + STCO[MedIncome2018] +  STCO[MedIncome1936],  # drops rent
+            data = BG.int %>% dplyr::filter(share.max>.80  & GRADE.max!='X') %>% st_set_geometry(NULL))        ,  # No
 
-HOLC grade D (red) areas with identical 1933-1939 characteristics to HOLC grade C (yellow) areas provide identification of the effect of redlining on current substandard household heating fuel provided historic observables sufficiently explain the designation of "red" versus "yellow". Combined with the assumption that redlined areas tend to have lower out-migration and tend to retain individuals within their neighborhood of birth\footnote{tested in Section \ref{assumptions} of this paper}, observing an increase in substandard heating attributed to redlining indicates that individuals whose parents or grandparents were forced, through policy, to reside within a redlined area are more likely to have a home with substandard heating fuel. Due to the cost of outmigration (e.g. losing family support), individuals whose parents or grandparents resided in redlined areas face choice sets that are heavily weighted towards substandard heating fuel. Finding a significant difference across "red" and similar "yellow" neighborhoods in substandard heating fuel logically leads to a difference in the prevalence of substandard home heating fuel amongst blacks that persists once we condition on income, the leading indicator of energy inequity.
+            
+      feols(fml = OtherSubstandardNarrow ~ as.factor(GRADE.max) +  MaxRace67 + repair_class |     STCO[NBlack_YNnum] + STCO[MedIncome2018] + STCO[MedIncome1936] + STCO[Rent35_Mean],
+            data = BG.int %>% dplyr::filter(share.max>.8 & GRADE.max!='X' ) %>% st_set_geometry(NULL))  ,  #* .10  # Yes
+
+      ######### MaxRace*NBlack_YN intx
+      feols(fml = OtherSubstandardNarrow ~ as.factor(GRADE.max) +  NBlack_YN*MaxRace67 + repair_class| STCO[MedIncome2018] + STCO[MedIncome1936] + STCO[Rent35_Mean], 
+      data = BG.int %>% dplyr::filter(share.max>.8 & GRADE.max!='X' ) %>% st_set_geometry(NULL))            , # No
+    
+      feols(fml = OtherSubstandardNarrow ~ as.factor(GRADE.max) + MaxRace67*as.factor(GRADE.max) + repair_class| STCO[NBlack_YNnum] + STCO[MedIncome2018] + STCO[MedIncome1936] + STCO[Rent35_Mean], 
+        data = BG.int %>% dplyr::filter(share.max>.8 & GRADE.max!='X' ) %>% st_set_geometry(NULL))    , # Yes
+      
+      feols(fml = OtherSubstandardNarrow ~ as.factor(GRADE.max) +  NBlack_YN*as.factor(GRADE.max)*MaxRace67 + repair_class| STCO[NBlack_YNnum] + STCO[MedIncome2018] + STCO[MedIncome1936] + STCO[Rent35_Mean], 
+        data = BG.int %>% dplyr::filter(share.max>.8 & GRADE.max!='X' ) %>% st_set_geometry(NULL))  # No
+    )
+    
+    my.coefmap = c('as.factor(GRADE.max)D' = 'Grade D (Red)',
+                   'as.factor(GRADE.max)B' = 'Grade B (Blue)',
+                   'as.factor(GRADE.max)A' = 'Grade A (Green)',
+                   'MaxRace67Black' = 'Predom. Black 2018',
+                   'MaxRace67Asian' = 'Predom. Asian 2018',
+                   'MaxRace67OtherRace' = 'Predom. other race 2018')
+                  
+
+    my.femap = list( c('Control for home repair status 1935', rep('', 1), rep('X', 8)),
+                    c('City-specific slope on Med. Income 2018, 1936', rep('X', length(BG.list2))),
+                    c('City-specific slope on Mean Rent 1935', '',rep('X', 3), '', rep('X', 4)),
+                    c('City-specific binary on Presence of Blacks 1935', rep('',2 ), rep('X', 7)),
+                    c('Intx Predom. race 2018 and Presence of Blacks 1935', rep('', 6), rep('X', 3)) )
+    model.use.vector = c(2,4,6,8)
+    
+    Substandard.Output = modelsummary(models = BG.list2[model.use.vector], se = 'cluster',
+                 coef_map = my.coefmap,
+                 gof_omit = 'AIC|BIC|R2 Pseu|Log\\.|R2$|R2 Within$|Std\\.',
+                 output = 'latex',  # instead of latex so that I can use kable_styling(latex_options = 'scale_down') for the table
+                 stars=TRUE, fmt = '%.5f',
+                 add_rows = as.data.frame(do.call(rbind, my.femap))[,c(1, 1+model.use.vector)],
+                 title = 'Share of Households with Substandard Fuel (Coal and None) by HOLC Grade\\label{tab:substandardnarrow2}',
+                 notes = list('Robust SE clustered by FIPS county','Omitted Grade: C (Yellow)')) %>%  # output as kableExtra
+      kable_styling(latex_options = 'scale_down') %>%
+      add_header_above(c(' ' = 1, 'Dependent Variable: Share of Households in Block Group with Substandard Heating' = 4)) 
+    
+    
+    writeLines(Substandard.Output, con = file.path(texout, 'Substandard.tex'))
+    
+    Substandard.Output %>% as_image(file = file.path(texout, 'Substandard.png') )
+    
+```
+
+My notes: Rent35 and NBlack_YN help to clarify the effect for Grade D (Red). AverageHomeAge cuts the sample a lot and leaves most results insignificant.
+
+This is old: Where \textit{PercentSubstandard} is the census block-group share of households reporting substandard home heating fuel. $\beta_{red}^{Grade}$ is the coefficient of interest which measures the difference in share of substandard heating fuel relative to the base category, which is "yellow" (Grade C), conditional on the controls. $\mathbf{X}_b$ are controls for 2018 characteristics including median income and, in some specifications, current racial composition in the form of an indicator for the plurality race. $\mathbf{X}_b$ also contains controls for characteristics from 1936-39 including median income, average rent, and a binary indicator for survey-reported presence of Black families. By including these historic characteristics, I control for the endogenous selection of some neighborhoods into the HOLC "red" grade. To the extent that surveyor-observable characteristics made a neighborhood more likely to be graded as "red", income and rents will control for these characteristics. Conditional on income, rent, and racial characteristics, "red" versus "yellow" HOLC grades were as good as randomly assigned. Implicit in this is the assumption that unobserved characteristics that led to a "red" grade no longer are present or influential in 2018 data. I test this below by residualizing the variation in HOLC grades and show (hopefully) that as-good-as-random assignment appears to hold -- no other observables explain assignment into "red" versus "yellow", indicating that surveyor effects are at play in designating grade.
+
+HOLC grade D (red) areas with identical 1933-1939 characteristics to HOLC grade C (yellow) areas provide identification of the effect of redlining on current substandard household heating fuel provided historic observables sufficiently explain the designation of "red" versus "yellow". Combined with the assumption that redlined areas tend to have lower out-migration and tend to retain individuals within their neighborhood of birth\footnote{tested in Section \ref{assumptions} of this paper}, observing an increase in substandard heating attributed to redlining indicates that individuals whose parents or grandparents were limited, through policy, to residing within a redlined area are more likely to have a home with substandard heating fuel. Due to the cost of outmigration (e.g. losing family support), individuals whose parents or grandparents resided in redlined areas face choice sets that are heavily weighted towards substandard heating fuel. Finding a significant difference across "red" and similar "yellow" neighborhoods in substandard heating fuel logically leads to a difference in the prevalence of substandard home heating fuel amongst blacks that persists once we condition on income, the leading indicator of energy inequity.
 
 
 ### Household response to heating degree days
-Equation \ref{mainSubstandard1} measures a proxy variable for overall heating system efficiency. However, it measurse only one of the three determinants of a household's energy burden, which are (1) the efficiency of the heating source and the integrity of the building envelope; (2) the household's preferences for ambient indoor temperature; and (3) the household's income and budget constraints. Equation \ref{mainSubstandard1} captures only one portion of (1) is captured in the substandard heating fuel.
+Equation \ref{mainSubstandard1} measures an outcome that proxies for overall heating system efficiency. However, it measures only one of the three determinants of a household's energy burden, which are (1) the efficiency of the heating source and the integrity of the building envelope; (2) the household's preferences for ambient indoor temperature; and (3) the household's income and budget constraints. Equation \ref{mainSubstandard1} captures only one portion of (1) is captured in the substandard heating fuel.
 
 Observing disparities between the fuel source of redlined and non-redlined homes does not necessarily show that redlining is a driver of observed energy inequity. Some households may have low utility for home heating and thus prefer to live in homes with less expensive or older heating equipment, choosing a low thermostat setpoint. That is, for a household that prefers a low interior thermostat setting, there is little incentive to invest in (or rent a home with) a new, efficient heating unit. Aggregation to the block-group level can mask important heterogeneity in household energy consumption. I use household-level monthly consumption data geolocated to the zip-code level to identify HOLC-grade specific energy consumption responses to cooling and heating events. 
 
 Household preferences and the household budget constraint form an important set of conditions for interpreting the results of Equation \ref{mainSubstandard1}. A household may choose a home to rent or purchase that has substandard heating fuel if the household has a preference for lower-cost housing and little preference for warm ambient temperature. While households may have some preference for warmth, heterogeneity in preferences and in budget constraints suggests some households will select into these inefficiently-heated homes. Thus, I examine a second measure indicative of the energy burden -- the household response to heating degree days. As previously discussed, heating degree days are a measure of the difference between then outdoor daily high and a reference temperature. If the reference temperature is 64 degrees farenheit, and the daily high is 59 degrees farenheit, then the day is a 64-59 = 5 heating degree day. Formally, the equation is $hdd_t = max\{0, \tau_t - T\}$ where $\tau_t$ is the daily high, and $T$ is the reference temperature. For the monthly measures used in this paper, heating degree days is formed by summing over all days in the month.
 
-Lower response to heating degree days can be generated by two competing explanations. First, households may have more efficient homes and heating systems. With a sealed building envelope and modern gas heaters, the cost to maintain the temperature inside may be low relative to households with drafty windows and older heating systems. A competing explanation is that Grade D areas are far less efficient, heating is more expensive on the margin, and households in these less efficient homes compensate by lowering the thermostat setpoint. A home set at 55 degrees overnight will consume less energy than a home set at 75 degrees, even if it is less efficient. To address this confounding, I leverage the household's response to a survey question on thermostat setpoint and build a model of household energy consumption.
-
-
-
-### A model of heating energy consumption
-Let heating energy consumed be determined by $H(\tau_i, T_i; \phi_i)$, where $\tau_i$ is the household's thermostat setpoint, $T_i$ is the outside ambient temperature around household $i$, and $\phi_i$ a parameter summarizing the envelope and appliance efficiency of household $i$. Households with more efficient insulation, dual-pane windows, and higher energy star rated heating systems will have a lower value of $\phi_i$. In a linear form, the cost of heating a home with setpoint $\tau_i$ in month $J$ is:
+To measure household-level energy consumption response to weather-related shocks, I separately estimate a household response function of the form:
 
 \begin{eqnarray}
-H = \phi_0 + \phi_i \sum_{d=1}^{D_m}(\tau_i - T_{id}) \label{eq:hdd1}
+energy^{j}_{ht} = \alpha_0 + \alpha_1^j hdd_{ht} + cdd_{ht} + \varepsilon_{ht} \label{mainResponse1}
+\end{eqnarray}
+
+Where $energy^{j}_{ht}$ is the monthly total energy consumption for household $h$ in month $t$ for energy $j\in \{gas,\quad electric\}$. Heating degree-days ($hdd$) and cooling degree-days ($cdd$) are specific to the household. Of interest is the $\alpha_1$ term, the heating degree -day response $hddr_h$ estimated for each household. Higher values of $hddr_h$ indicate larger energy consumption responses. To test $hddr$ across HOLC grades, I regress $hddr_{h}$ on household-level and neighborhood characteristics.
+
+\begin{eqnarray}
+hddr^j_{h} = \delta_0 + \sum_{g=1}^4 \delta_{g}^{Grade} +  \delta \mathbf{X}_h + \varepsilon_{h} \label{mainResponse2}
+\end{eqnarray}
+
+Here, $hddr^j_h$ is the household $h$ response to $hdd$ from Equation \ref{mainResponse1} for fuel $j \in \{gas, \quad electric\}$. $\delta_g^{Grade}$ is the estimate of the difference in $hddr^j_h$ between HOLC grades using urban un-graded neighborhoods as the base level. $\mathbf{X}_h$ includes the household's reported average annual income, home age, and dummy variables for each Climate Zone.
+
+```{r RASS-1setup, echo=F, cache=TRUE, warning=F, message = F}
+all09.use = inner_join(s09, full_join(e09.use, g09.use, by=c('IDENT')), by='IDENT') %>% 
+  left_join(ZCTA.int %>% st_set_geometry(NULL) %>% 
+              dplyr::mutate(servzip = as.integer(zip)) %>%
+              dplyr::select(GRADE.max, GRADE.A:GRADE.NA, MedIncome1936, NBlack_PCT, NBlack_YN, Rent35_Mean, MedIncome2018, Rent3739_Mean, Minc, AverageHomeAge, repair_class, share.max, servzip),
+                                    by = 'servzip')
+
+SET.codebook = data.frame(HNITESET = c(1:7, 97),
+                          NITESET = c('Off','<55','55-60','60-65','65-70','70-75','>75','Unk')) %>%
+  dplyr::mutate(NITESET = factor(NITESET, levels = c('Off','<55','55-60','60-65','65-70','70-75','>75','Unk')))
+
+all09.use = all09.use %>% left_join(SET.codebook, by = 'HNITESET') %>%
+  replace_na(list(NITESET = 'Unk')) %>%
+  dplyr::mutate(NITESET = factor(NITESET)) %>%
+  left_join(SET.codebook %>% dplyr::select(HDAYSET = HNITESET, DAYSET = NITESET), by = 'HDAYSET') %>%
+  replace_na(list(DAYSET = 'Unk')) %>%
+  dplyr::mutate(DAYSET = factor(DAYSET))
+
+all09.use = all09.use %>% dplyr::mutate(GRADE.maxl = factor(GRADE.max, levels = c('C','X','D','A','B')))
+```
+
+```{r ResponseOutputg1, echo=F, cache=TRUE, warning=F, message = F, result = 'as.is'}
+
+  # Do the responses (coefs. cdd.e, cdd.g, hdd.e, hdd.g) vary by redlining?
+  # # What if we control for cdd.e response (AC usage, which tells us about building envelope)
+  data.temp.g = all09.use %>% 
+                          dplyr::filter(share.max >.80) %>% 
+                          dplyr::filter(PHTNGCNT==1|PHTNGRAD==1) %>% 
+                          dplyr::mutate(GRADE.max = fct_relevel(GRADE.max, 'C','D','X')) %>%                          
+                          # dplyr::filter(GRADE.max %in% c('C','D')) %>%
+                          dplyr::filter(!is.na(hdd.g)) %>%
+                          dplyr::mutate(repair_class = factor(as.character(repair_class), levels = c('Excellent','Good','Fair','Poor','Unk', NA)))  %>%
+                          dplyr::mutate(repair_class = relevel(repair_class, 'Poor'),
+                                        ethnicity = relevel(ethnicity, 'White'))
+              
+                                        
+                                        
+Response.Output.g1 = modelsummary(list(
+                  feols(hdd.g ~ as.factor(GRADE.max)   | STCO +  CZT24 + CZT24[SQFT] , 
+                        data = data.temp.g, cluster = 'CZT24'),
+
+  
+                  feols(hdd.g ~ as.factor(GRADE.max) + avginc + homeage + kids |STCO +  CZT24 + CZT24[SQFT] ,
+                        data = data.temp.g, cluster = 'CZT24')  ,  # NO D's left that have hdd.g
+                  
+                 feols(hdd.g ~ as.factor(GRADE.max) + NBlack_YN +  Rent3739_Mean + AverageHomeAge + repair_class + avginc + homeage + kids |STCO +  CZT24 + CZT24[SQFT] ,
+                        data = data.temp.g, cluster = 'CZT24')  ,
+                  
+                 feols(hdd.g ~ as.factor(GRADE.max) + ethnicity + NBlack_YN +  Rent3739_Mean + AverageHomeAge + repair_class + avginc + homeage + kids |STCO +  CZT24 + CZT24[SQFT] ,
+                        data = data.temp.g, cluster = 'CZT24') 
+                                      ),
+             stars=T,
+             output = 'latex',
+             gof_omit = 'AIC|BIC|R2 Pseu|Log\\.|R2$|R2 Within$|Std\\.',
+             coef_map = c('as.factor(GRADE.max)D' = 'Grade D (Red)',
+                          'as.factor(GRADE.max)C' = 'Grade C (Yellow)',
+                          'as.factor(GRADE.max)X' = 'Ungraded (nearby)',
+                          'NBlack_YNTRUE' = 'Presence of Blacks 1936',
+                          'Rent3739_Mean' = 'Avg. Rent 1937',
+                          'AverageHomeAge' = 'Avg. Home Age 1937',
+                          'repair_classExcellent' = 'Repair Class 1937: Excellent',
+                          'repair_classGood' = 'Repair Class 1937: Good',
+                          'repair_classFair' = 'Repair Class 1937: Fair',
+                          'repair_classPoor' = 'Repair Class 1937: Poor',
+                          'repair_classUnk' = 'Repair Class 1937: Unknown'),
+             add_rows = as.data.frame(rbind(c('City-specific slopes for Sq. feet','X','X','X','X'),
+                                            c('Controls for Hh income, home age, kids','','X','X','X'),
+                                            c('Controls for Hh ethnicity','','','','X'))),
+             title = 'Regression of heating-degree day gas consumption response on HOLC grade and income \\label{tab:responsegas1}',
+             notes = c('Using only households with gas as primary heating fuel')) %>%
+      kable_styling(latex_options = 'scale_down') %>%
+      add_header_above(c(' ' = 1, 'Dependent Variable: Coef. of HDD Response from Household Regression' = 4))
+
+writeLines(Response.Output.g1, con = file.path(texout, 'ResponseOutputg1.tex'))
+
+so = suppressWarnings(Response.Output.g1 %>% save_kable(file = file.path(texout, 'ResponseOutputg1.png'), keep_tex = T,  latex_header_includes = NULL, density = 300))
+
+# include_graphics(so)
+Response.Output.g1
+```
+
+```{r ResponseOutpute1, echo=F, cache=TRUE, warning=F, message = F}
+
+
+data.temp.e = all09.use %>% 
+  dplyr::filter(share.max >.80) %>% 
+  dplyr::filter(PHTELCRH==1|PHTELBSB==1) %>%
+  dplyr::mutate(GRADE.max = fct_relevel(GRADE.max, 'C','D','A','B','X')) %>%                          
+  dplyr::filter(!is.na(hdd.e)) %>%
+  dplyr::mutate(repair_class = factor(as.character(repair_class), levels = c('Excellent','Good','Fair','Poor','Unk', NA)))  %>%
+  dplyr::mutate(repair_class = relevel(repair_class, 'Poor'),
+                ethnicity = relevel(ethnicity, 'White'))
+
+
+
+Response.Output.e1 = modelsummary(list(
+                  feols(hdd.e ~ as.factor(GRADE.max)   | STCO +  CZT24 + CZT24[SQFT], 
+                        data = data.temp.e, cluster = 'CZT24'),
+                  
+                  feols(hdd.e ~ as.factor(GRADE.max) + avginc + homeage + kids |STCO +  CZT24 + CZT24[SQFT], 
+                        data = data.temp.e, cluster = 'CZT24'),
+                  
+                  feols(hdd.e ~ as.factor(GRADE.max) + NBlack_YN +  Rent3739_Mean + AverageHomeAge + repair_class + avginc + homeage + kids |STCO +  CZT24 + CZT24[SQFT]  , 
+                        data = data.temp.e, cluster = 'CZT24'),
+                 
+                  feols(hdd.e ~  as.factor(GRADE.max) + ethnicity + NBlack_YN +  Rent3739_Mean + AverageHomeAge + repair_class + avginc + homeage + kids |STCO +  CZT24 + CZT24[SQFT] , 
+                        data = data.temp.e, cluster = 'CZT24')   ),
+             stars=T,
+             output = 'latex',
+             gof_omit = 'AIC|BIC|R2 Pseu|Log\\.|R2$|R2 Within$|Std\\.',
+             coef_map = c('as.factor(GRADE.max)D' = 'Grade D (Red)',
+                          'as.factor(GRADE.max)C' = 'Grade C (Yellow)'),
+             add_rows = as.data.frame(rbind(c('City-specific slopes for Sq. feet','X','X','X','X'),
+                                            c('Controls for Hh income, home age, kids','','X','X','X'),
+                                            c('Controls for Hh ethnicity','','','','X'))),
+             title = 'Regression of heating-degree day electricity consumption response on HOLC grade and income\\label{tab:responseelectric1}',
+             notes = c('Using only households with electricity as primary heating fuel','Omitted grade is "X" and no "C" has electric heating')) %>%
+      add_header_above(c(' ' = 1, 'Dependent Variable: Coef. of HDD Response from Household Regression' = 4)) %>%
+      column_spec(5, color = 'white', background = 'blue')
+
+writeLines(Response.Output.e1, con = file.path(texout, 'ResponseOutpute1.tex'))
+
+so = suppressWarnings(Response.Output.e1 %>% save_kable(file = file.path(texout, 'ResponseOutpute1.png'), keep_tex = T,  latex_header_includes = NULL, density = 300))
+
+Response.Output.e1
+
+```
+
+How about cdd.e for electric:
+
+```{r ResponseOutputec, echo=F, cache=TRUE, warning=F, message = F}
+
+# cooling degre days:
+# 
+data.temp.e.c = all09.use %>% 
+  dplyr::filter(share.max >.80) %>% 
+  # dplyr::filter(PHTELCRH==1|PHTELBSB==1) %>%
+  dplyr::mutate(GRADE.max = fct_relevel(GRADE.max, 'C','D','A','B','X')) %>%                          
+  dplyr::filter(!is.na(cdd.e)) %>%
+  dplyr::mutate(repair_class = factor(as.character(repair_class), levels = c('Excellent','Good','Fair','Poor','Unk', NA)))  %>%
+  dplyr::mutate(repair_class = relevel(repair_class, 'Poor'),
+                ethnicity = relevel(ethnicity, 'White'))
+
+
+
+Response.Output.e.c = modelsummary(list(
+                  feols(cdd.e ~ as.factor(GRADE.max) + AC  | STCO +  CZT24 + CZT24[SQFT], 
+                        data = data.temp.e.c, cluster = 'CZT24'),
+                  
+                  feols(cdd.e ~ as.factor(GRADE.max) + AC + avginc + homeage + kids |STCO +  CZT24 + CZT24[SQFT], 
+                        data = data.temp.e.c, cluster = 'CZT24'),
+                  
+                  feols(cdd.e ~ as.factor(GRADE.max) + AC + NBlack_YN +  Rent3739_Mean + AverageHomeAge + repair_class + homeage + kids |STCO +  CZT24 + CZT24[SQFT]  , 
+                        data = data.temp.e.c, cluster = 'CZT24'),
+                 
+                  feols(cdd.e ~  as.factor(GRADE.max) + AC + ethnicity + NBlack_YN +  Rent3739_Mean + AverageHomeAge + repair_class + avginc + homeage + kids |STCO +  CZT24 + CZT24[SQFT] , 
+                        data = data.temp.e.c, cluster = 'CZT24')   ),
+             stars=T,
+             output = 'latex',
+             gof_omit = 'AIC|BIC|R2 Pseu|Log\\.|R2$|R2 Within$|Std\\.',
+             coef_map = c('as.factor(GRADE.max)D' = 'Grade D (Red)',
+                          'as.factor(GRADE.max)X' = 'Grade X (Ungraded)',
+                          'ACTRUE' = 'Hh has AC',
+                          'avginc' = 'Hh Income'),
+             add_rows = as.data.frame(rbind(c('City-specific slopes for Sq. feet','X','X','X','X'),
+                                            c('Controls for Hh income, home age, kids','','X','X','X'),
+                                            c('Controls for Hh ethnicity','','','','X'))),
+             title = 'Regression of cooling-degree day electricity consumption response on HOLC grade and income\\label{tab:responseelectric1}',
+             notes = c('Omitted grade is "X" and no "C" has electric heating')) %>%
+      add_header_above(c(' ' = 1, 'Dependent Variable: Coef. of CDD Response from Household Regression' = 4)) %>%
+      column_spec(5, color = 'white', background = 'blue')
+
+
+writeLines(Response.Output.e.c, con = file.path(texout, 'ResponseOutputec.tex'))
+
+so = suppressWarnings(Response.Output.e.c %>% save_kable(file = file.path(texout, 'ResponseOutputec.png'), keep_tex = T,  latex_header_includes = NULL, density = 300))
+
+# include_graphics(so)
+Response.Output.e.c
+
+```
+
+### A model of heating energy consumption
+
+Higher responses to heating degree days in HOLC "red" areas can be generated by two competing explanations. First, households in HOLC "red" areas may have less efficient homes and heating systems. When outside temperatures drop and $hdd$ increases, a household with a poorly-sealed building envelope, drafty windows, and antiquated equipment will consume more energy to maintain the inside temperature relative to households with double-pane windows and newer heating systems maintaining the same temperature. A competing explanation is that HOLC "red" areas are more efficient, heating is less expensive on the margin, and households in these more efficient homes adjust by raising the thermostat setpoint. A home set at 72 degrees overnight may consume more energy during a cold spell than a home set at 55 degrees, even if it is more efficient. Looking only at household response is informative, but not necessarily unbiased.
+
+To address this confounding, I construct a model of household energy consumption that leverages the household's response to a survey question on thermostat setpoint. Let heating energy consumed be determined by $H(\kappa_i, \tau_{it}; \phi_i)$, where $\kappa_i$ is the household's thermostat setpoint, $\tau_{it}$ is the daily outside ambient temperature around household $i$ on day $t$, and $\phi_i$ a parameter summarizing the envelope and appliance efficiency of household $i$. Households with more efficient insulation, dual-pane windows, and higher energy star rated heating systems will have a lower value of $\phi_i$. In a linear form, the cost of heating a home with setpoint $\kappa_i$ in month $m$ is:
+
+\begin{eqnarray}
+H = \phi_0 + \phi_i \sum_{d=1}^{D_m}max\{0, (\kappa_i - \tau_{id})\} \label{eq:hdd1}
 \end{eqnarray}
 
 The sum of ambient outdoor daily temperature deviations $T_{id}$ from the thermostat setpoint $\tau_i$ represents the sum of the temperature gradient between indoor and outdoor temperature. We do not observe the ambient outdoor temperature for each household, but do observe the monthly $m$ heating degree days, which are $\sum_{d=1}^{D_m}(\tau_{r(i)} - T_{id})$, where $\tau_r$ is the  heating degree days (HDD) reference temperature. The reference temperature varies by climate zone and is constant for each household across all time periods in the data. Rewriting \ref{eq:hdd1}:
@@ -580,7 +892,7 @@ To obtain the survey data from the University of Richmond's scanned and digitize
 
 In total, the data contains `r NROW(BG.int)` blockgroups that intersect at least some of one or more HOLC neighborhoods. Of these, `r sum(BG.int$share.max>.80)` intersect more than 80\% with a single HOLC grade, and `r sum(BG.int$share.max>.95)` intersect more than 95\%. Table \ref{tab:datasummaryBG1} shows summary statistics for these blockgroups by sample.
     
-```{r datasummary1, echo=FALSE, out.width = '90%', message = FALSE, error = FALSE}
+```{r datasummary, echo=FALSE, out.width = '90%', message = FALSE, error = FALSE, result= 'as.is'}
 #` https://vincentarelbundock.github.io/modelsummary/articles/datasummary.html
   
 minmax <- function(x) sprintf("[%.2f, %.2f]", min(x, na.rm=T), max(x, na.rm=T))
@@ -588,24 +900,95 @@ mean_na <- function(x) mean(x, na.rm = TRUE)
 sd_na <- function(x) sd(x, na.rm=TRUE)
 Missing <- function(x, fmt = "%.0f") sprintf(fmt = fmt, sum(is.na(x)))
 
-# datasummary((`Substandard Heating` = OtherSubstandardNarrow) + (`Median Income 2018` = MedIncome2018) + (`Median Income 1936` = MedIncome1936) + (`Share of largest overlap` = share.max) + (`Pct Black 1933` = NBlack_PCT) + (`Blacks present` = NBlack_YN) + (`Mean Rent 1935` = Rent35_Mean) + (`Mean Rent 37-39` = Rent3739_Mean) ~ Factor(GRADE.max) * ((`Mean` = mean_na) + (`Std. dev` = sd_na) + (`Min Max` = minmax) + Missing), 
-#             data = BG.int %>% st_set_geometry(NULL) %>%  dplyr::mutate(GRADE.max = fct_relevel(GRADE.max,'D','C','B','A','X'),
-#                                                                        NBlack_YN = as.integer(NBlack_YN),
-#                                                                        NBlack_PCT = ifelse(!is.finite(NBlack_PCT), NA, NBlack_PCT/100)) %>% dplyr::filter(share.max>.80),
-#             output = 'kableExtra', align = 'c',  title = 'Summary statistics for blockgroups with 80 percent or more overlap (study) \\label{tab:datasummaryBG1}')  %>% 
-#   kable_styling(latex_options="scale_down")#  %>% as_image()
 
-datasummary( ( (`HOLC Grade` = Factor(GRADE.max)) + 1)  * ( (`Substandard Heating` = OtherSubstandardNarrow) + (`Median Income 2018` = MedIncome2018) + (`Median Income 1936` = MedIncome1936) + (`Share of largest overlap` = share.max) + (`Pct Black 1933` = NBlack_PCT) + (`Blacks present` = NBlack_YN) + (`Mean Rent 1935` = Rent35_Mean) + (`Mean Rent 37-39` = Rent3739_Mean) ) ~ ((`Mean` = mean_na) + (`Std. dev` = sd_na) + (`Min Max` = minmax) + Missing), 
+
+ds.out = datasummary( ( (`HOLC Grade` = Factor(GRADE.max)) + 1)  * ( (`Substandard Heating` = OtherSubstandardNarrow) + (`Median Income 2018` = MedIncome2018) + (`Median Income 1936` = MedIncome1936) + (`Share of largest overlap` = share.max) + (`Pct Black 1933` = NBlack_PCT) + (`Blacks present` = NBlack_YN) + (`Mean Rent 1935` = Rent35_Mean) + (`Mean Rent 37-39` = Rent3739_Mean) ) ~ ((`Mean` = mean_na) + (`Std. dev` = sd_na) + (`Min Max` = minmax) + Missing), 
             data = BG.int %>% st_set_geometry(NULL) %>%  dplyr::mutate(GRADE.max = fct_relevel(GRADE.max,'D','C','B','A','X'),
                                                                        NBlack_YN = as.integer(NBlack_YN),
                                                                        NBlack_PCT = ifelse(!is.finite(NBlack_PCT), NA, NBlack_PCT/100)) %>% dplyr::filter(share.max>.80),
-            output = 'kableExtra', fmt = 3, align = 'cllcccc',  title = 'Summary statistics for blockgroups with 80 percent or more overlap (study) \\label{tab:datasummaryBG1}')  %>% 
+            output = 'latex', fmt = 3, align = 'cllcccc',  title = 'Summary statistics for blockgroups with 80 percent or more overlap (study) \\label{tab:datasummaryBG1}')  %>% 
   kable_styling(latex_options="scale_down")#  %>% as_image()
+
+
+writeLines(ds.out, con = file.path(texout, 'dsout.png'))
+
+so = suppressWarnings(ds.out %>% save_kable(file = file.path(texout, 'dsout.png'), keep_tex = T,  latex_header_includes = NULL, density = 300))
+
+# include_graphics(so)
+ds.out
 ## TO DO: Add divider lines
+
 
 ```
 
 
+```{r Overlay, echo=F, out.width = '90%'}
+
+hh = HOLC %>% dplyr::filter(city=='Oakland')
+dd = data %>% dplyr::filter(STCO=='06001')
+
+berk.xlim = c(-122.31, -122.24)
+berk.ylim = c(37.85, 37.90)
+
+commonlist = list( coord_sf(xlim = berk.xlim, ylim = berk.ylim),
+                   theme_bw(),
+                   theme(axis.text = element_blank()))
+
+# berk.map = get_map(location = c(lon = -122.275, lat = 37.875),
+#                    maptype = 'roadmap',
+#                    source = 'osm', force=T)
+
+colvec= c(A = 'green', B = 'blue', C = 'yellow', D = 'red')
+
+d.only = ggplot(BG.int %>% dplyr::filter(STCO=='06001')) + geom_sf(alpha = .5, fill = 'gray50',show.legend = F) +
+  scale_fill_viridis_d(option = 'D') +
+  guides(fill = 'none') + labs(subtitle = 'All block-groups in Berkeley, CA') +
+  commonlist
+
+h.only = ggplot(hh) + geom_sf(aes(fill = GRADE), alpha = .5, show.legend = FALSE) +
+  scale_fill_manual(values = colvec) +
+  guides(fill = 'none') + labs(subtitle = 'HOLC Neighborhoods in Berkeley, CA') +
+  commonlist
+
+dh = ggplot() + geom_sf(data = hh, aes(fill = GRADE), alpha = .5, show.legend = FALSE) + 
+  scale_fill_manual(values = colvec) + 
+  geom_sf(data = dd, inherit.aes = FALSE, fill = 'gray50', alpha = .75, show.legend = FALSE) +
+  guides(fill = 'none') + labs(subtitle = 'CBG and HOLC with >80% intersection') +
+  commonlist
+
+fin = ggplot() + geom_sf(data = dd, aes(fill = GRADE.max), alpha = 1) +
+  scale_fill_manual(values = colvec) +
+  guides(fill = 'none') + labs(subtitle = 'Sufficiently overlapping intersection') +
+  commonlist
+ 
+ggsave(plot = d.only, filename = file.path(texout, 'Berk_CBGonly.png'), device = 'png', width = 6, height = 6)
+
+ggsave(plot = h.only, filename = file.path(texout, 'Berk_HOLConly.png'), device = 'png', width = 6, height = 6)
+
+ggsave(plot = dh    , filename = file.path(texout, 'Berk_Overlay.png'), device = 'png', width = 6, height = 6)
+
+ggsave(plot = fin   , filename = file.path(texout, 'Berk_zFin.png'), device = 'png', width = 6, height = 6)
+
+
+#--> create animated gif
+imgs = list.files(texout, pattern = 'Berk_', full.names = TRUE)
+img_list <- lapply(imgs, image_read)
+
+## join the images together
+img_joined <- image_join(img_list)
+
+## animate at 2 frames per second
+img_animated <- image_animate(img_joined, delay = c(4,4,5,8)*100)# fps = .10)
+
+## view animated image
+img_animated
+
+## save to disk
+image_write(image = img_animated,
+            path = file.path(texout, 'overlay4.gif'))
+
+
+```
 ## Census blockgroups
 
 
@@ -712,65 +1095,16 @@ heating fuels in 2018 relative to those graded "C".
 
 
 
-```{r substandard-est-3, echo=FALSE, fig.width=7, result='as.is', message=F, warning=F, cache = TRUE}
-    
-          # Try with OtherSubstandardWide 
-          # Results are not super helpful, perhaps this should be in an appendix?
-          
-    BG.list2 = list(
-      
-      feols(fml = OtherSubstandardWide ~ as.factor(GRADE.max) + MedIncome2018 + MedIncome1936 + Rent3739_Mean | STCO,
-            data = BG.int %>% dplyr::filter(share.max>.8 & !is.na(GRADE.max) & GRADE.max!='X') %>% st_set_geometry(NULL)),
-      
-      feols(fml = OtherSubstandardWide ~ as.factor(GRADE.max) + MedIncome2018*MedIncome1936 + Rent3739_Mean | STCO,
-            data = BG.int %>% dplyr::filter(share.max>.8 & !is.na(GRADE.max) & GRADE.max!='X') %>% st_set_geometry(NULL))  ,  
-      
-      feols(fml = OtherSubstandardWide ~ as.factor(GRADE.max) + MedIncome2018*MedIncome1936 + Rent3739_Mean | STCO,
-            data = BG.int %>% dplyr::filter(share.max>.95 & !is.na(GRADE.max) & GRADE.max!='X') %>% st_set_geometry(NULL)),
-      
-      feols(fml = OtherSubstandardWide ~ as.factor(GRADE.max) +  MedIncome2018*MedIncome1936 + Rent3739_Mean + Black + White + Asian | STCO, 
-            data = BG.int %>% dplyr::filter(share.max>.8  & GRADE.max!='X') %>% st_set_geometry(NULL))  ,
-      
-      feols(fml = OtherSubstandardWide ~ as.factor(GRADE.max) +  MedIncome2018*MedIncome1936 + Rent3739_Mean + Black*as.factor(GRADE.max) + White + Asian | STCO, 
-            data = BG.int %>% dplyr::filter(share.max>.8  & GRADE.max!='X') %>% st_set_geometry(NULL))  ,
-      
-      feols(fml = OtherSubstandardWide ~ as.factor(GRADE.max) +  MedIncome2018*MedIncome1936 + Rent3739_Mean + Black + White + Asian | STCO, 
-            data = BG.int %>% dplyr::filter(share.max>.95 & GRADE.max!='X' ) %>% st_set_geometry(NULL)),
-      
-      feols(fml = OtherSubstandardWide ~ as.factor(GRADE.max) +  MedIncome2018*MedIncome1936 + Rent3739_Mean + NBlack_YN + NBlack_PCT + Black + White + Asian | STCO, 
-            data = BG.int %>% dplyr::filter(share.max>.8  & GRADE.max!='X') %>% st_set_geometry(NULL))  ,
-      
-      feols(fml = OtherSubstandardWide ~ as.factor(GRADE.max) +  MedIncome2018*MedIncome1936 + Rent3739_Mean + NBlack_YN + NBlack_PCT + Black + White + Asian | STCO, 
-            data = BG.int %>% dplyr::filter(share.max>.95 & GRADE.max!='X' ) %>% st_set_geometry(NULL))
-    )
-    
-    modelsummary(models = BG.list2, se = 'cluster',
-                 output = 'kableExtra',  # instead of latex so that I can use kable_styling(latex_options = 'scale_down') for the table
-                 stars=TRUE, fmt = '%.5f',
-                  add_rows = tibble::tribble(~term, ~one, ~two, ~three, ~f, ~fi, ~si, ~se, ~ei,
-                                        'HOLC Grade Threshold', '80%','80%', '95%', '80%', '80%', '95%', '80%', '95%'),
-                 title = 'Share of Households with OtherSubstandardWide Fuel (Coal + Wood + OtherFuel + LPGas + FuelOil + NoFuel) by HOLC Grade',
-                 notes = list('Robust SE clustered by FIPS county','Columns 1, 2, 3, 5 are blokgroups with >80% of total area in one HOLC grade; 4, 6, and 8 are >95%')) %>%  # output as kableExtra
-      kable_styling(latex_options = 'scale_down') # to use this kableExtra option!
-```
-
-
-#### Results
-The same phenomenon is not observed when defining substandard heating as including LP gas and fuel oil. In many parts
-of the country, LP gas and fuel oil are commonplace, and can be relatively efficient and desirable. It is not wholly
-unexpected for this to be insignificant.
-
-
 ```{r substandard-est-4zcta, eval = FALSE, echo=FALSE, fig.width=7, result='as.is', message=F, warning=F, cache = cacheoption}
     # NOT EVAL: Eval is turned off, no ZCTA's are in the data after dropping NA's from HOLC and filtering down to 80% coverage.
     # ZCTA is just not viable. Perhaps for CA with RASS data?
 ZCTA.list= list(
   
-  feols(fml = OtherSubstandard ~ as.factor(GRADE.max) + MedIncome2018 + MedIncome1936 + Rent3739_Mean | STATEFP ,
+  feols(fml = OtherSubstandard ~ as.factor(GRADE.max) + MedIncome2018 + MedIncome1936 + Rent3739_Mean | STCO ,
         data = ZCTA.int %>% dplyr::filter(share.max>.7 & !is.na(GRADE.max) & GRADE.max!='X') %>% st_set_geometry(NULL))   ,
 
   
-  feols(fml = OtherSubstandard ~ as.factor(GRADE.max) +  MedIncome2018 + MedIncome1936 + Rent3739_Mean | STATEFP, 
+  feols(fml = OtherSubstandard ~ as.factor(GRADE.max) +  MedIncome2018 + MedIncome1936 + Rent3739_Mean | STCO, 
         data = ZCTA.int %>% dplyr::filter(share.max>.7  & GRADE.max!='X') %>% st_set_geometry(NULL))  
   
   # feols(fml = OtherSubstandard ~ as.factor(GRADE.max) +  MedIncome2018*MedIncome1936 + Rent3739_Mean + Black + White + Asian | STCO, 
@@ -834,76 +1168,6 @@ $$hdd^e_h = \beta_0 + \sum 1(grade_h=g)\beta_g + \beta_{inc} avgincome_h + cdd^e
 Where $hdd^e$ is the electricity consumption response to one additional heating degree day for household $h$ located in HOLC grade $g$. $cdd^e$ is the household's electricity consumption response
 to an additional cooling degree day. Table (below that) shows results for $hdd^g$. $\gamma^{CZ}$ are climate-zone fixed effects.
 
-
-```{r RASS-1setup, echo=F, cache=TRUE, warning=F, message = F}
-all09.use = inner_join(s09, full_join(e09.use, g09.use, by=c('IDENT')), by='IDENT') %>% 
-  left_join(ZCTA.int %>% st_set_geometry(NULL) %>% 
-              dplyr::mutate(servzip = as.integer(zip)) %>%
-              dplyr::select(GRADE.max, GRADE.A:GRADE.NA, MedIncome1936, NBlack_PCT, NBlack_YN, Rent3739_Mean, Minc, share.max, servzip),
-                                    by = 'servzip')
-
-SET.codebook = data.frame(HNITESET = c(1:7, 97),
-                          NITESET = c('Off','<55','55-60','60-65','65-70','70-75','>75','Unk')) %>%
-  dplyr::mutate(NITESET = factor(NITESET, levels = c('Off','<55','55-60','60-65','65-70','70-75','>75','Unk')))
-
-all09.use = all09.use %>% left_join(SET.codebook, by = 'HNITESET') %>%
-  replace_na(list(NITESET = 'Unk')) %>%
-  dplyr::mutate(NITESET = factor(NITESET)) %>%
-  left_join(SET.codebook %>% dplyr::select(HDAYSET = HNITESET, DAYSET = NITESET), by = 'HDAYSET') %>%
-  replace_na(list(DAYSET = 'Unk')) %>%
-  dplyr::mutate(DAYSET = factor(DAYSET))
-
-all09.use = all09.use %>% dplyr::mutate(GRADE.maxl = factor(GRADE.max, levels = c('C','X','D','A','B')))
-```
-
-```{r RASS-1ex, echo=F, cache=TRUE, warning=F, message = F}
-
-  # Do the responses (coefs. cdd.e, cdd.g, hdd.e, hdd.g) vary by redlining?
-  # # What if we control for cdd.e response (AC usage, which tells us about building envelope)
-modelsummary(list(feols(hdd.g ~ GRADE.max + avginc | CZT24, all09.use %>% 
-                          dplyr::filter(share.max >.80 & GRADE.max%in%c('C','D','X')) %>% 
-                          unnest(gdata) %>% dplyr::filter(PHTNGCNT==1|PHTNGRAD==1) %>% 
-                          dplyr::mutate(GRADE.max = fct_relevel(GRADE.max, 'X','D','C')), cluster = 'CZT24'),
-                  # feols(hdd.g ~ GRADE.max + avginc + cdd.e  | CZT24, all09.use %>% 
-                  #         dplyr::filter(share.max >.80 & GRADE.max%in%c('C','D','X')) %>% 
-                  #         unnest(gdata) %>% dplyr::filter(PHTNGCNT==1|PHTNGRAD==1) %>% 
-                  #         dplyr::mutate(GRADE.max = fct_relevel(GRADE.max, 'X','D','C')), cluster = 'CZT24'),
-                  feols(hdd.g ~ GRADE.max + avginc + homeage + kids | CZT24, all09.use %>% 
-                          dplyr::filter(share.max >.80 & GRADE.max%in%c('C','D','X')) %>% 
-                          unnest(gdata) %>% dplyr::filter(PHTNGCNT==1|PHTNGRAD==1) %>% 
-                          dplyr::mutate(GRADE.max = fct_relevel(GRADE.max, 'X','D','C')), cluster = 'CZT24')),
-                  # feols(hdd.g ~ GRADE.max + avginc + cdd.e + homeage + kids | CZT24, all09.use %>% 
-                  #         dplyr::filter(share.max >.80 & GRADE.max%in%c('C','D','X')) %>% 
-                  #         unnest(gdata) %>% dplyr::filter(PHTNGCNT==1|PHTNGRAD==1) %>% 
-                  #         dplyr::mutate(GRADE.max = fct_relevel(GRADE.max, 'X','D','C')), cluster = 'CZT24')),
-             stars=T,
-             title = 'Regression of heating-degree day gas consumption response on HOLC grade and income \\label{tab:responsegas1}',
-             notes = c('Using only households with gas as primary heating fuel','Omitted grade is refactored to be "X" '))
-```
-
-```{r RASS-2ex}
-
-modelsummary(list(feols(hdd.e ~ as.factor(GRADE.max) + avginc | CZT24, all09.use %>% 
-                          dplyr::filter(share.max >.80) %>% unnest(edata) %>% dplyr::filter(PHTELCRH==1|PHTELBSB==1)%>% 
-                          dplyr::mutate(GRADE.max = fct_relevel(GRADE.max, 'X','D','C')), cluster = 'CZT24'),
-                  feols(hdd.e ~ as.factor(GRADE.max) + avginc + cdd.e | CZT24, all09.use %>% 
-                          dplyr::filter(share.max >.80) %>% unnest(edata) %>% dplyr::filter(PHTELCRH==1|PHTELBSB==1)%>% 
-                          dplyr::mutate(GRADE.max = fct_relevel(GRADE.max, 'X','D','C')), cluster = 'CZT24'),
-                 feols(hdd.e ~ as.factor(GRADE.max) + avginc   + homeage + kids | CZT24, all09.use %>% 
-                              dplyr::filter(share.max >.80) %>% unnest(edata) %>% dplyr::filter(PHTELCRH==1|PHTELBSB==1)%>% 
-                              dplyr::mutate(GRADE.max = fct_relevel(GRADE.max, 'X','D','C')), cluster = 'CZT24'),
-                  feols(hdd.e ~ as.factor(GRADE.max) + avginc + cdd.e +  homeage + kids | CZT24, all09.use %>% 
-                              dplyr::filter(share.max >.80) %>% unnest(edata) %>% dplyr::filter(PHTELCRH==1|PHTELBSB==1)%>% 
-                              dplyr::mutate(GRADE.max = fct_relevel(GRADE.max, 'X','D','C')), cluster = 'CZT24')),
-                  # feols(hdd.e ~ as.factor(GRADE.max) + avginc + cdd.e +  homeage + kids + Rent3739_Mean + MedIncome1936 | CZT24, all09.use %>% 
-                  #             dplyr::filter(share.max >.80) %>% unnest(edata) %>% dplyr::filter(PHTELCRH==1|PHTELBSB==1)%>% 
-                  #             dplyr::mutate(GRADE.max = fct_relevel(GRADE.max, 'X','D','C')), cluster = 'CZT24')),
-             stars=T,
-             title = 'Regression of heating-degree day electricity consumption response on HOLC grade and income\\label{tab:responseelectric1}',
-             notes = c('Using only households with electricity as primary heating fuel','Omitted grade is "X" for common comparison with gas as all "C" is lost in gas'))
-```
-
-
 Coefficient results in \ref{tab:responsegas1}, Model (1) indicate that households located inside the HOLC Grade D (red) areas 
 have significantly higher gas responses relative to those in HOLC ungraded areas within the urban boundary and relative
 to those in HOLC Grade C. The omitted factor in \ref{tab:responsegas1} is ungraded so that results on Grade D can be 
@@ -917,31 +1181,50 @@ tend to have lower response to heating degree days relative to those in Grade C.
 
 
 
-```{r RASS-1b, message=F, warning=F, echo = F, cache = TRUE}
-# What if we pool all of the monthly bill observations? Turns out, there are very few (if any) NG-using Hh's in D!  dplyr::filter(cdd<=10 & (PHTNGCNT==1|PHTNGRAD==1))
-all09.use.pooled = all09.use %>% unnest(edata) %>% dplyr::filter(share.max > .90 & cdd<=0 & (PHTELCRH==1|PHTELBSB==1)) %>%
+```{r ResponseOutpute2, message=F, warning=F, echo = F, cache = TRUE}
+# What if we pool all of the monthly bill observations? 
+all09.use.pooled.e = all09.use %>% unnest(edata) %>% dplyr::filter(share.max > .90 & cdd<=0 & (PHTELCRH==1|PHTELBSB==1)) %>%
   dplyr::mutate(NITESET = relevel(NITESET, ref = '>75'),
                 DAYSET = relevel(DAYSET, ref = '>75'),
                 ethnicity = relevel(ethnicity, ref = 'White'),
                 avginc1000 = avginc/1000)
 
-modelsummary(list(
-  feols(u ~ hdd + hdd:GRADE.max + hdd:avginc | IDENT,             weights=~d, data = all09.use.pooled, warn = F), # Do redlined areas have diff. responses?
-  feols(u ~ hdd + hdd:GRADE.max + hdd:avginc + hdd:cdd.e | IDENT, weights=~d, data = all09.use.pooled, warn = F) , # Do redlined areas have diff. responses controlling for building envelope (w/AC usage)
-  feols(u ~ hdd + hdd:NITESET + hdd:GRADE.max + hdd:avginc + hdd:cdd.e | IDENT, weights=~d, data = all09.use.pooled, warn = F) , # Do redlined areas have diff. responses cond. on setpoint
-  feols(u ~ hdd + hdd:DAYSET + hdd:GRADE.max + hdd:avginc + hdd:cdd.e | IDENT,  weights=~d, data = all09.use.pooled, warn = F) ,# Or daytime setting
-  feols(u ~ hdd + hdd:NITESET + hdd:GRADE.max + hdd:avginc  + hdd:Rent3739_Mean | IDENT, weights=~d, data = all09.use.pooled, warn = F), # Looks good with just nighttime setting + rent37. .10 sig for daytime
-  feols(u ~ hdd + hdd:DAYSET + hdd:NITESET + hdd:GRADE.max + hdd:avginc + hdd:cdd.e | IDENT, weights=~d, data = all09.use.pooled, warn = F),
-  feols(u ~ hdd + hdd:DAYSET + hdd:NITESET + hdd:GRADE.max + hdd:avginc  | IDENT, weights=~d, data = all09.use.pooled, warn = F),
-  feols(u ~ hdd + hdd:DAYSET + hdd:NITESET + hdd:GRADE.max + hdd:avginc + hdd:Rent3739_Mean | IDENT, weights=~d, data = all09.use.pooled, warn = F),
-  feols(u ~ hdd + hdd:DAYSET:as.factor(CZT24) + hdd:NITESET:as.factor(CZT24) + hdd:GRADE.max + hdd:avginc  | IDENT, weights=~d, data = all09.use.pooled, warn = F),
-  feols(u ~ hdd + hdd:DAYSET + hdd:NITESET + hdd:GRADE.max + hdd:avginc  | IDENT, weights=~d, data = all09.use.pooled %>% dplyr::filter(DAYSET !='Unk' & NITESET !='Unk'), warn = F)),# Or daytime setting
+Response.Output.e2 = modelsummary(list(
+  feols(u ~ hdd + hdd:GRADE.max + hdd:avginc + hdd:Rent3739_Mean + hdd:NBlack_YN  | IDENT, weights=~d, data = all09.use.pooled.e, warn = F), # Do redlined areas have diff. responses?
+# feols(u ~ hdd + hdd:GRADE.max + hdd:NITESET +  hdd:avginc  | IDENT, weights=~d, data = all09.use.pooled.e, warn = F) , # Do redlined areas have diff. responses cond. on setpoint
+# feols(u ~ hdd + hdd:GRADE.max + hdd:DAYSET  +  hdd:avginc   | IDENT,  weights=~d, data = all09.use.pooled.e, warn = F) ,# Or daytime setting
+# feols(u ~ hdd + hdd:GRADE.max + hdd:NITESET +  hdd:avginc  + hdd:Rent3739_Mean + hdd:NBlack_YN | IDENT, weights=~d, data = all09.use.pooled.e, warn = F), 
+  feols(u ~ hdd + hdd:GRADE.max + hdd:DAYSET:as.factor(CZT24) + hdd:NITESET:as.factor(CZT24) + hdd:avginc  | IDENT , weights=~d, data = all09.use.pooled.e, warn = F),
+  feols(u ~ hdd + hdd:GRADE.max + hdd:DAYSET:as.factor(CZT24) + hdd:NITESET:as.factor(CZT24) + hdd:avginc  | IDENT + CZT24[hdd], weights=~d, data = all09.use.pooled.e, warn = F),
+  feols(u ~ hdd + hdd:GRADE.max + hdd:DAYSET:as.factor(CZT24) + hdd:NITESET:as.factor(CZT24) + hdd:avginc + hdd:Rent3739_Mean + hdd:NBlack_YN | IDENT + CZT24[hdd], weights=~d, data = all09.use.pooled.e, warn = F)),# Or daytime setting
   stars = T,
-  # coef_omit = c('CZT24'),
+  gof_omit = 'AIC|BIC|R2 Pseu|Log\\.|R2$|R2 Within$|Std\\.',
+  coef_map = c('hdd' = 'hdd',
+               'hdd:GRADE.maxD' = 'hdd x Grade D (Red)',
+               'hdd:avgin' = 'hdd x Hh Inc',
+               'hdd:Rent3739_Mean' = 'hdd x Avg rent 37-39'),
+  add_rows = as.data.frame(rbind(c('Hh FE','X','X','X','X'),
+                                 c('Avg Inc x hdd','X','X','X','X'),
+                                 c('Thermostat setting x Climate Zone x hdd','','X','X','X'),
+                                 c('Controls for 1937 incl. rent, presence of Blacks','X','','','X'))),
   title = 'Regression of electricity consumption on heating degree days, interacted with HOLC grade and income, conditional on thermostat setpoint\\label{tab:electricresponsethemset1}',
   notes = c('Using only households with electricity as primary heating fuel','Omitted grade is "C"'),
-  output = 'kableExtra') %>%
-  kable_styling(latex_options = 'scale_down')
+  output = 'latex') %>%
+  kable_styling(latex_options = 'scale_down')  %>%
+  add_header_above(c(' ' = 1, 'Dependent Variable: Energy consumption (kWh)' = 4)) %>%
+  column_spec(5, color = 'white', background = 'blue')
+
+
+
+writeLines(Response.Output.e2, con = file.path(texout, 'ResponseOutpute2.tex'))
+
+so = suppressWarnings(Response.Output.e2 %>% save_kable(file = file.path(texout, 'ResponseOutpute2.png'), keep_tex = T,  latex_header_includes = NULL, density = 300))
+
+# include_graphics(so)
+Response.Output.e2
+
+
+
 ```
 
 
@@ -964,26 +1247,43 @@ for overnight comfort, but rather face higher expenditures simply to maintain on
 
 
 
-```{r RASS-1bGas, message=F, warning=F, echo = F, cache = TRUE}
-all09.use.pooled.g = all09.use %>% unnest(gdata) %>% dplyr::filter(share.max > .90 & cdd<=0 & (PHTNGCNT==1|PHTNGRAD==1)) %>%
+```{r ResponseOutputg2, message=F, warning=F, echo = F, cache = TRUE}
+all09.use.pooled.g = all09.use %>% unnest(gdata) %>% dplyr::filter(share.max > .80 & cdd<=0 & (PHTNGCNT==1|PHTNGRAD==1)) %>%
   dplyr::mutate(NITESET = relevel(NITESET, ref = '>75'),
                 DAYSET = relevel(DAYSET, ref = '>75'),
                 ethnicity = relevel(ethnicity, ref = 'White'),
                 GRADE.maxl = fct_relevel(GRADE.max, 'C','X','D'),
                 avginc1000 = avginc/1000)
 
-modelsummary(list(
-  feols(u ~ hdd + hdd:GRADE.maxl + hdd:avginc | IDENT,             weights=~d, data = all09.use.pooled.g, warn = F), # Do redlined areas have diff. responses?
-  feols(u ~ hdd + hdd:GRADE.maxl + hdd:avginc + hdd:cdd.e | IDENT, weights=~d, data = all09.use.pooled.g, warn = F) , # Do redlined areas have diff. responses controlling for building envelope (w/AC usage)
-  feols(u ~ hdd + hdd:NITESET + hdd:GRADE.maxl + hdd:avginc + hdd:cdd.e | IDENT, weights=~d, data = all09.use.pooled.g, warn = F) , # Do redlined areas have diff. responses cond. on setpoint
-  feols(u ~ hdd + hdd:DAYSET + hdd:GRADE.maxl + hdd:avginc + hdd:cdd.e | IDENT,  weights=~d, data = all09.use.pooled.g, warn = F) ,# Or daytime setting
-  feols(u ~ hdd + hdd:DAYSET + hdd:NITESET + hdd:GRADE.maxl + hdd:avginc  | IDENT, weights=~d, data = all09.use.pooled.g, warn = F),
-  feols(u ~ hdd + hdd:DAYSET + hdd:NITESET + hdd:GRADE.maxl + hdd:avginc + hdd:cdd.e | IDENT, weights=~d, data = all09.use.pooled.g, warn = F)),# Or daytime setting
+Response.Output.g2 = modelsummary(list(
+  feols(u ~ hdd + hdd:GRADE.max + hdd:avginc + hdd:Rent3739_Mean + hdd:NBlack_YN  | IDENT, weights=~d, data = all09.use.pooled.g, warn = F), 
+  feols(u ~ hdd + hdd:GRADE.max + hdd:DAYSET:as.factor(CZT24) + hdd:NITESET:as.factor(CZT24) + hdd:avginc  | IDENT , weights=~d, data = all09.use.pooled.g, warn = F),
+  feols(u ~ hdd + hdd:GRADE.max + hdd:DAYSET:as.factor(CZT24) + hdd:NITESET:as.factor(CZT24) + hdd:avginc  | IDENT + CZT24[hdd], weights=~d, data = all09.use.pooled.g, warn = F),
+  feols(u ~ hdd + hdd:GRADE.max + hdd:DAYSET:as.factor(CZT24) + hdd:NITESET:as.factor(CZT24) + hdd:avginc + hdd:Rent3739_Mean + hdd:NBlack_YN | IDENT + CZT24[hdd], weights=~d, data = all09.use.pooled.g, warn = F)),# Or daytime setting
   stars = T,
-  title = 'Regression of natural gas consumption on heating degree days, interacted with HOLC grade and income, conditional on thermostat setpoint\\label{tab:gasresponsethemset1}',
+  gof_omit = 'AIC|BIC|R2 Pseu|Log\\.|R2$|R2 Within$|Std\\.',
+  coef_map = c('hdd' = 'hdd',
+               'hdd:GRADE.maxD' = 'hdd x Grade D (Red)'),
+  add_rows = as.data.frame(rbind(c('Hh FE','X','X','X','X'),
+                                 c('Hdd x avg inc','X','X','X','X'),
+                                 c('Hdd x thermostat setting x Climate Zone','','X','X','X'),
+                                 c('Hdd x controls for 1937 incl. rent, presence of Blacks','X','','','X'))),
+  title = 'Regression of natural gas consumption on heating degree days, interacted with HOLC grade and income, conditional on thermostat setpoint\\label{tab:electricresponsethemset1}',
   notes = c('Using only households with natural gas as primary heating fuel','Omitted grade is "C"'),
-  output = 'kableExtra') %>%
-  kable_styling(latex_options = 'scale_down')
+  output = 'latex') %>%
+  kable_styling(latex_options = 'scale_down')  %>%
+  add_header_above(c(' ' = 1, 'Dependent Variable: Energy consumption (therms)' = 4)) %>%
+  column_spec(5, color = 'white', background = 'blue')
+
+
+writeLines(Response.Output.g2, con = file.path(texout, 'ResponseOutputg2.tex'))
+
+so = suppressWarnings(Response.Output.g2 %>% save_kable(file = file.path(texout, 'ResponseOutputg2.png'), keep_tex = T,  latex_header_includes = NULL, density = 300))
+
+# include_graphics(so)
+Response.Output.g2
+
+
 ```
 
 Unfortunately, we **lose all Grade D households in natural gas**.
@@ -992,22 +1292,44 @@ Unfortunately, we **lose all Grade D households in natural gas**.
 
 #### Household level energy by ethnicity
 
-This section examines the coefficient of response across ethnicity, as well as HOLC grade and thermostat set points.
+This section examines the coefficient of response across ethnicity (reported in RASS), as well as HOLC grade and thermostat set points.
 
-```{r RASS-1c, echo=F, message = F, warning=F, cache = TRUE}
-modelsummary(list(
-  feols(u ~ hdd + hdd:GRADE.max + hdd:ethnicity + hdd:avginc1000  | IDENT, weights=~d, data = all09.use.pooled, warn = F) , # Do redlined areas have diff. responses cond. on setpoint
-  feols(u ~ hdd + hdd:GRADE.max + hdd:ethnicity + hdd:NITESET + hdd:avginc1000 | IDENT, weights=~d, data = all09.use.pooled, warn = F) , # Do redlined areas have diff. responses cond. on setpoint
-  feols(u ~ hdd + hdd:GRADE.max + hdd:ethnicity + hdd:DAYSET + hdd:avginc1000  | IDENT, weights=~d, data = all09.use.pooled, warn = F)  ,# Or daytime setting
-  feols(u ~ hdd + hdd:GRADE.max + hdd:ethnicity + hdd:NITESET + hdd:DAYSET + hdd:avginc1000 | IDENT, weights=~d, data = all09.use.pooled, warn = F)
+```{r ResponseOutpute3, echo=F, message = F, warning=F, cache = TRUE}
+
+
+Response.Output.e3 = modelsummary(list(
+  feols(u ~ hdd + hdd:GRADE.max + hdd:ethnicity + hdd:avginc1000 + hdd:NBlack_YN + hdd:Rent3739_Mean  | IDENT + CZT24[hdd], weights=~d, data = all09.use.pooled.e, warn = F) , # Do redlined areas have diff. responses cond. on setpoint
+  feols(u ~ hdd + hdd:GRADE.max + hdd:ethnicity + hdd:NITESET + hdd:avginc1000 + hdd:NBlack_YN + hdd:Rent3739_Mean | IDENT + CZT24[hdd], weights=~d, data = all09.use.pooled.e, warn = F) , # Do redlined areas have diff. responses cond. on setpoint
+  feols(u ~ hdd + hdd:GRADE.max + hdd:ethnicity + hdd:DAYSET + hdd:avginc1000 + hdd:NBlack_YN + hdd:Rent3739_Mean  | IDENT + CZT24[hdd], weights=~d, data = all09.use.pooled.e, warn = F)  ,# Or daytime setting
+  feols(u ~ hdd + hdd:GRADE.max + hdd:ethnicity + hdd:NITESET + hdd:DAYSET + hdd:avginc1000 + hdd:NBlack_YN + hdd:Rent3739_Mean | IDENT + CZT24[hdd], weights=~d, data = all09.use.pooled.e, warn = F)
   # Not enough observations - feols(u ~ hdd + hdd:GRADE.max:ethnicity + hdd:ethnicity + hdd:NITESET + hdd:DAYSET + hdd:avginc1000 | IDENT, weights=~d, data = all09.use.pooled, warn = F) 
 ), 
 stars = T,
+coef_map = c('hdd' = 'hdd',
+             'hdd:GRADE.maxD' = 'hdd x Grade D (Red)',
+             'hdd:ethnicityAsian and Pacific Islander' = 'hdd:Asian',
+             'hdd:ethnicityBlack' = 'hdd:Black',
+             'hdd:ethnicityHispanic' = 'hdd:Hispanic',
+             'hdd:ethnicityOther' = 'hdd:Other',
+             'hdd:ethnicityMixed' = 'hdd:Mixed'),
+  add_rows = as.data.frame(rbind(c('Hh FE','X','X','X','X'),
+                                 c('Hdd x avg inc','X','X','X','X'),
+                                 c('Hdd x thermostat setting Night x Climate Zone',' ','X',' ','X'),
+                                 c('Hdd x thermostat setting Day x Climate Zone',' ',' ','X','X'),
+                                 c('Hdd x controls for 1937 incl. rent, presence of Blacks','X','','','X'))),
 title = 'Regression of electricity consumption on heating degree days, interacted with HOLC grade, ethnicity, and income, conditional on thermostat setpoint\\label{tab:electricresponsethemset2}',
 notes = c('Using only households with electricity as primary heating fuel','Omitted grade is "C"'),
+gof_omit = 'AIC|BIC|R2 Pseu|Log\\.|R2$|R2 Within$|Std\\.',
 output = 'kableExtra') %>%
-  kable_styling(latex_options = 'scale_down')
+  kable_styling(latex_options = 'scale_down')  %>%
+  add_header_above(c(' ' = 1, 'Dependent Variable: Energy consumption (kWh)' = 4)) 
 
+writeLines(Response.Output.e3, con = file.path(texout, 'ResponseOutpute3.tex'))
+
+so = suppressWarnings(Response.Output.e3 %>% save_kable(file = file.path(texout, 'ResponseOutpute3.png'), keep_tex = T,  latex_header_includes = NULL, density = 300))
+
+# include_graphics(so)
+Response.Output.e3
 
           # doesn't look so great when cdd.e is included as its missing for many
           # this is just electric; what about g?
@@ -1020,20 +1342,39 @@ for Hispanic households. Conditioning on separate effects for nighttime and dayt
 coefficient of response for households in HOLC grade red (D), but the point estimate is still positive. 
 
 
-```{r RASS-1cgas, echo=F, message = F, warning = F, cache = TRUE}
+```{r ResponseOutputg3, echo=F, message = F, warning = F, cache = TRUE, result = 'as.is'}
 
 
-modelsummary(list(
-  feols(u ~ hdd + hdd:GRADE.maxl + hdd:ethnicity + hdd:avginc1000               | IDENT, weights=~d, data = all09.use.pooled.g, warn = F) , # Do redlined areas have diff. responses cond. on setpoint
-  feols(u ~ hdd + hdd:GRADE.maxl + hdd:ethnicity + hdd:NITESET + hdd:avginc1000 | IDENT, weights=~d, data = all09.use.pooled.g, warn = F) , # Do redlined areas have diff. responses cond. on setpoint
-  feols(u ~ hdd + hdd:GRADE.maxl + hdd:ethnicity + hdd:DAYSET + hdd:avginc1000  | IDENT, weights=~d, data = all09.use.pooled.g, warn = F)  ,# Or daytime setting
-  feols(u ~ hdd + hdd:GRADE.maxl + hdd:ethnicity + hdd:NITESET + hdd:DAYSET + hdd:avginc1000 | IDENT, weights=~d, data = all09.use.pooled.g, warn = F)
-  # NOt enough observations - feols(u ~ hdd + hdd:GRADE.max:ethnicity + hdd:ethnicity + hdd:NITESET + hdd:DAYSET + hdd:avginc1000 | IDENT, weights=~d, data = all09.use.pooled, warn = F) 
-), stars = T, 
-title = 'Regression of gas consumption on heating degree days, interacted with HOLC grade, ethnicity, and income, conditional on thermostat setpoint\\label{tab:gasresponsethemset2}',
-output = 'kableExtra',
-notes = c('Using only households with natural gas as primary heating fuel','Omitted grade is "C"')) %>%
-  kable_styling(latex_options = 'scale_down')
+Response.Output.g3 = modelsummary(list(
+  feols(u ~ hdd + hdd:GRADE.max + hdd:ethnicity + hdd:avginc1000 + hdd:NBlack_YN + hdd:Rent3739_Mean  | IDENT + CZT24[hdd], weights=~d, data = all09.use.pooled.g, warn = F) , # Do redlined areas have diff. responses cond. on setpoint
+  feols(u ~ hdd + hdd:GRADE.max + hdd:ethnicity + hdd:NITESET + hdd:avginc1000 + hdd:NBlack_YN + hdd:Rent3739_Mean | IDENT + CZT24[hdd], weights=~d, data = all09.use.pooled.g, warn = F) , # Do redlined areas have diff. responses cond. on setpoint
+  feols(u ~ hdd + hdd:GRADE.max + hdd:ethnicity + hdd:DAYSET + hdd:avginc1000 + hdd:NBlack_YN + hdd:Rent3739_Mean  | IDENT + CZT24[hdd], weights=~d, data = all09.use.pooled.g, warn = F)  ,# Or daytime setting
+  feols(u ~ hdd + hdd:GRADE.max + hdd:ethnicity + hdd:NITESET + hdd:DAYSET + hdd:avginc1000 + hdd:NBlack_YN + hdd:Rent3739_Mean | IDENT + CZT24[hdd], weights=~d, data = all09.use.pooled.g, warn = F)
+  # Not enough observations - feols(u ~ hdd + hdd:GRADE.max:ethnicity + hdd:ethnicity + hdd:NITESET + hdd:DAYSET + hdd:avginc1000 | IDENT, weights=~d, data = all09.use.pooled, warn = F) 
+), 
+stars = T,
+coef_map = c('hdd' = 'hdd',
+             'hdd:GRADE.maxD' = 'hdd x Grade D (Red)',
+             'hdd:GRADE.maxX' = 'hdd x Grade X (Ungraded)',
+             'hdd:ethnicityAsian and Pacific Islander' = 'hdd:Asian',
+             'hdd:ethnicityBlack' = 'hdd:Black',
+             'hdd:ethnicityHispanic' = 'hdd:Hispanic',
+             'hdd:ethnicityOther' = 'hdd:Other',
+             'hdd:ethnicityMixed' = 'hdd:Mixed'),
+title = 'Regression of natural gas consumption on heating degree days, interacted with HOLC grade, ethnicity, and income, conditional on thermostat setpoint\\label{tab:gasresponsethemset3}',
+notes = c('Using only households with natural gas as primary heating fuel','Omitted grade is "C"'),
+gof_omit = 'AIC|BIC|R2 Pseu|Log\\.|R2$|R2 Within$|Std\\.',
+output = 'latex') %>%
+  kable_styling(latex_options = 'scale_down')  %>%
+  add_header_above(c(' ' = 1, 'Dependent Variable: Energy consumption (therms)' = 4))
+
+writeLines(Response.Output.g3, con = file.path(texout, 'ResponseOutputg3.tex'))
+
+so = suppressWarnings(Response.Output.g3 %>% save_kable(file = file.path(texout, 'ResponseOutputg3.png'), keep_tex = T,  latex_header_includes = NULL, density = 300))
+
+# include_graphics(so)
+Response.Output.g3
+
 ```
 
 Table \ref{tab:gasresponsethemset2} shows an insufficient number of gas households in HOLC grade D (red) areas which precludes us from seeing the effect of HOLC red on response to heating degree days.

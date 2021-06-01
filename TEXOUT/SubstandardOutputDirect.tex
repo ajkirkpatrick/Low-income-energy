@@ -1,0 +1,38 @@
+\begin{table}
+
+\caption{Share of Households with Substandard Fuel (Coal and None) by HOLC Grade\label{tab:substandardnarrow2}}
+\centering
+\resizebox{\linewidth}{!}{
+\begin{tabular}[t]{lccc>{}c}
+\toprule
+\multicolumn{1}{c}{ } & \multicolumn{4}{c}{Dependent Variable: Share of Households in Block Group with Substandard Heating} \\
+\cmidrule(l{3pt}r{3pt}){2-5}
+  & Model 1 & Model 2 & Model 3 & Model 4\\
+\midrule
+Grade D (Red) & 0.00335** & 0.00279* & 0.00285** & \cellcolor{green}{\textcolor{white}{0.00416***}}\\
+ & (0.00160) & (0.00155) & (0.00143) & \cellcolor{green}{\textcolor{white}{(0.00135)}}\\
+Grade B (Blue) & -0.00071 & -0.00050 & -0.00078 & \cellcolor{green}{\textcolor{white}{0.00006}}\\
+ & (0.00158) & (0.00161) & (0.00126) & \cellcolor{green}{\textcolor{white}{(0.00140)}}\\
+Grade A (Green) & 0.00005 & 0.00045 & 0.00042 & \cellcolor{green}{\textcolor{white}{0.00180}}\\
+ & (0.00280) & (0.00289) & (0.00239) & \cellcolor{green}{\textcolor{white}{(0.00322)}}\\
+Predom. Black 2018 &  &  & -0.00331*** & \cellcolor{green}{\textcolor{white}{-0.00223}}\\
+ &  &  & (0.00103) & \cellcolor{green}{\textcolor{white}{(0.00144)}}\\
+Predom. Asian 2018 &  &  & -0.00408* & \cellcolor{green}{\textcolor{white}{-0.00172}}\\
+ &  &  & (0.00244) & \cellcolor{green}{\textcolor{white}{(0.00185)}}\\
+Predom. other race 2018 &  &  & -0.00059 & \cellcolor{green}{\textcolor{white}{0.00211}}\\
+ &  &  & (0.00396) & \cellcolor{green}{\textcolor{white}{(0.00454)}}\\
+\midrule
+Num.Obs. & 6715 & 6715 & 3998 & \cellcolor{green}{\textcolor{white}{3998}}\\
+R2 Adj. & 0.126 & 0.121 & 0.070 & \cellcolor{green}{\textcolor{white}{0.070}}\\
+FE: STCO & X & X & X & \cellcolor{green}{\textcolor{white}{X}}\\
+Control for home repair status 1935 & X & X & X & \cellcolor{green}{\textcolor{white}{X}}\\
+City-specific slope on Med. Income 2018, 1936 & X & X & X & \cellcolor{green}{\textcolor{white}{X}}\\
+City-specific slope on Mean Rent 1935 & X & X & X & \cellcolor{green}{\textcolor{white}{X}}\\
+City-specific binary on Presence of Blacks 1935 &  & X & X & \cellcolor{green}{\textcolor{white}{X}}\\
+Intx Predom. race 2018 and Presence of Blacks 1935 &  &  &  & \cellcolor{green}{\textcolor{white}{X}}\\
+\bottomrule
+\multicolumn{5}{l}{\textsuperscript{} * p $<$ 0.1, ** p $<$ 0.05, *** p $<$ 0.01}\\
+\multicolumn{5}{l}{\textsuperscript{} Robust SE clustered by FIPS county}\\
+\multicolumn{5}{l}{\textsuperscript{} Omitted Grade: C (Yellow)}\\
+\end{tabular}}
+\end{table}
