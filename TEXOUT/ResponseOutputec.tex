@@ -26,7 +26,7 @@
 \begin{document}
 \begin{table}
 
-\caption{(\#tab:ResponseOutputec)Regression of cooling-degree day electricity consumption response on HOLC grade and income\label{tab:responseelectric1}}
+\caption{Regression of cooling-degree day electricity consumption response on HOLC grade and income\label{tab:responseelectric1}}
 \centering
 \begin{tabular}[t]{lccc>{}c}
 \toprule
@@ -34,24 +34,24 @@
 \cmidrule(l{3pt}r{3pt}){2-5}
   & Model 1 & Model 2 & Model 3 & Model 4\\
 \midrule
-Grade D (Red) & 0.158 & 0.024 & -0.487** & \cellcolor{blue}{\textcolor{white}{-0.792*}}\\
+Grade D (Red) & 0.158 & 0.024 & -0.487* & \cellcolor{blue}{\textcolor{white}{-0.792+}}\\
  & (0.151) & (0.228) & (0.145) & \cellcolor{blue}{\textcolor{white}{(0.391)}}\\
-Grade X (Ungraded) & 0.699** & 0.521* & 0.660** & \cellcolor{blue}{\textcolor{white}{0.243}}\\
+Grade X (Ungraded) & 0.699* & 0.521+ & 0.660* & \cellcolor{blue}{\textcolor{white}{0.243}}\\
  & (0.211) & (0.232) & (0.170) & \cellcolor{blue}{\textcolor{white}{(0.361)}}\\
-Hh has AC & 1.896*** & 1.736*** & 1.869*** & \cellcolor{blue}{\textcolor{white}{1.727***}}\\
+Hh has AC & 1.896*** & 1.736*** & 1.869** & \cellcolor{blue}{\textcolor{white}{1.727**}}\\
  & (0.256) & (0.292) & (0.287) & \cellcolor{blue}{\textcolor{white}{(0.358)}}\\
-Hh Income &  & 0.000*** &  & \cellcolor{blue}{\textcolor{white}{0.000***}}\\
+Hh Income &  & 0.000** &  & \cellcolor{blue}{\textcolor{white}{0.000***}}\\
  &  & (0.000) &  & \cellcolor{blue}{\textcolor{white}{(0.000)}}\\
 \midrule
 Num.Obs. & 1251 & 1251 & 842 & \cellcolor{blue}{\textcolor{white}{776}}\\
 R2 Adj. & 0.083 & 0.087 & 0.096 & \cellcolor{blue}{\textcolor{white}{0.103}}\\
 FE: CZT24 & X & X & X & \cellcolor{blue}{\textcolor{white}{X}}\\
 FE: STCO & X & X & X & \cellcolor{blue}{\textcolor{white}{X}}\\
-City-specific slopes for Sq. feet & X & X & X & \cellcolor{blue}{\textcolor{white}{X}}\\
+County-specific slopes for Sq. feet & X & X & X & \cellcolor{blue}{\textcolor{white}{X}}\\
 Controls for Hh income, home age, kids &  & X & X & \cellcolor{blue}{\textcolor{white}{X}}\\
 Controls for Hh ethnicity &  &  &  & \cellcolor{blue}{\textcolor{white}{X}}\\
 \bottomrule
-\multicolumn{5}{l}{\textsuperscript{} * p $<$ 0.1, ** p $<$ 0.05, *** p $<$ 0.01}\\
+\multicolumn{5}{l}{\textsuperscript{} + p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
 \multicolumn{5}{l}{\textsuperscript{} Omitted grade is "X" and no "C" has electric heating}\\
 \end{tabular}
 \end{table}

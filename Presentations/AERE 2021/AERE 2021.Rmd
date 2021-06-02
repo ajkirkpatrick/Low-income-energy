@@ -176,8 +176,7 @@ class: MSU
 .pull-left[
 ## Homeowners Loan Corporation (HOLC)
 - New Deal agency tasked with assessing mortgage risk for federal refinancing efforts
-- Surveys by local agents 1933-1939
-- Nbhds graded based on trends in area. 
+- Neighborhoods risk-graded by local agents 1933-1939
 - Largely considered "subversive minorities" to be harbinger of decline and risk.
 - *De facto* discrimination in housing was widespread 
 ]
@@ -192,19 +191,23 @@ image_crop(image_read((file.path(oldgraphics, 'C5.jpg'))), geometry_size_percent
 class: MSU
 # Research Question
 
-#### Energy Inequity is in part the result of a *hysteresis* effect rooted in historic housing discrimination.
-Redlining was a "critical juncture" that separated otherwise similar housing stock. Redlining acted as a Schelling "focal point" for *de facto* discrimination.
+### Energy Inequity is in part the result of a *hysteresis* effect rooted in historic housing discrimination.
+Redlining was a "critical juncture" that separated otherwise similar housing stock.
 
-- Test by examining differences in home energy services quality, measured as the .orange[*presence of sufficient heating technology*] and .orange[*energy consumption responses to cold weather shocks*], between current redlined and observably similar households.
+- Test by examining differences in home energy services quality between redlined and observably similar households, measured as the 
+  - (1) .orange[*presence of sufficient heating technology*] and 
+  - (2) .orange[*energy consumption responses to cold weather shocks*]
   - Controlling for historic and current small neighborhood characteristics
 
 --
 
-#### Future research
-- Lending discrimination debatably ended with CRA in 1977. Households able to migrate, re-sort.
+#### Not addressed here
+- Lending discrimination debatably ended with CRA in 1977. Households able to migrate, re-sort. Why does Energy Inequity persist?
 - Test for "stickiness" of neighborhood. 
   - High non-market moving costs. 
   - Neighborhood support, family proximity, etc.
+  
+#### Historic data $\rightarrow$ many assumptions
 
 ---
 class: MSU
@@ -212,8 +215,8 @@ class: MSU
 
 ### Prior literature
 - Hoffman et al (2020) urban heat islands and redlined areas
-- Aaronson et al (2020) examined credit availability in redlined areas over 1930-1980 with RD-based analysis
 - Nardone et al (2019) asthma and redlined areas
+- Aaronson et al (2020) examined credit availability in redlined areas over 1930-1980 with RD-based analysis
 
 ### Enlightening and incredibly inconvenient:
 Fishback, La Voice, Shertzer, and Walsh (2020) on **endogeneity of redlining designation.**
@@ -227,30 +230,50 @@ class: MSU
 # Analysis
 
 ### Empirical strategy
-Acknowledging Fishback et al (2020), control for selection on observables:
-- Presence of minorities
-- Repair and quality of housing
+Acknowledging Fishback et al (2020), I control for selection on observables:
 - Rent and income (historic and current)
+- Presence of minorities in 193X
+- Repair and quality of housing in 193X
+
 
 .orange[Assume: conditional on observables that determined selection, Grade D (red) is as good as randomly assigned]
-- Unobserved neighborhood characteristics in 1930's are no longer relevant today.
-
+  - Unobserved neighborhood characteristics in 1930's not captured by observables are no longer relevant today.
+ 
+ 
 ### Identification of effect of redlining using observably similar HOLC neighborhoods
 - Multiple surveyors result in nearly arbitrary designation of Grade D (red) and Grade C (yellow) when "subversive minorities" were present.
-- Many Grade C (yellow) areas had more Blacks and worse home repair and trend than nearby Grade D (red).
+- Many Grade C (yellow) areas had larger Black populations or worse home repair than nearby Grade D (red).
+--
+
 - Drawback: leaning on linear controls.
   - Solution: very flexible with linear controls.
   
-  
 ---
 class: MSU
-# Data
+# Analysis
+
+
+#### (1) Presence of sufficient heating technology
+- Ask "are there differences in heating sources between redlined and near-redlined homes, controlling for selection on observables?"
+- Substandard heating technology = Coal or "None"
+- Requires spatially explicit heating fuel use
+
+
+#### (2)  Energy consumption responses to cold weather shocks
+- Ask "are there differences in energy consumption responses to weather shocks between redlined and near-redlined homes, controlling for selection on observables?"
+- Data on monthly consumption and heating degree days for households in Grade D / Grade C areas
+- Requires spatially explicit household electricity consumption with income
+
+
+---
+class: MSU
+# Data - Heating technology
 
 .pull-left[
-HOLC .font60[from URichmond "Mapping Inequality"]
+#### HOLC .font50[from URichmond "Mapping Inequality"]
 - 196 cities, 8,877 neighborhoods
 - Survey data processed
-  - Grade A-B-C-D
+  - Grade .green[A]-.blue[B]-.yellow[C]-.red[D]
   - Repair class
   - Median Income 1936
   - Mean rent 1936
@@ -258,17 +281,20 @@ HOLC .font60[from URichmond "Mapping Inequality"]
 ]
 
 .pull-right[
-2018 ACS Block-Group
-- 44,357 BG intersect HOLC
+#### 2018 ACS at block-group
+- 44,357 BGs intersect HOLC
   - Heating fuel
+  - Coal + "None" $\rightarrow$ substandard
   - Racial distribution
   - Median income 2018
 ]
 
+--
+
 .pull-left[
 Overlay BG with HOLC, keeping those BG that have >80% within one grade
 - Take areal average when BG covers multiple HOLC neigbhorhoods of same grade
-- 19,678 block-groups meet criteria
+- 6,715 have most HOLC information
 ]
 
 .pull-right[
@@ -278,4 +304,141 @@ include_graphics(copy_to_include(file.path(texout, 'overlay4.gif')))
 
 ```
 ]
+
+---
+class: MSU
+# Data - Hh Consumption
+
+### Measuring Hh response to temperature shocks
+
+#### California RASS (Residential Appliance Saturation Survey)
+- Confidential dataset with 24,216 homes surveyed in CA in 2009
+  - Monthly consumption (from utility) for electricity, gas (if used)
+  - Monthly HDD and CDD
+  - Primary heating fuel
+  - Income
+  - Nighttime thermostat setpoint
+  - Daytime thermostat setpoint
+  - **Zip code**
+- .orange[138 households in 37 zip codes] with >80% coverage for electric
+- .orange[1,018 households in 83 zip codes] with >80% coverage for gas
+
+
+
+---
+class: MSU
+# Analysis: Substandard Heating Tech.
+
+### Flexible fixed effect specification
+<br><br>
+$$PercentSubstandard_{b} = \beta_0 + \sum_{g\in \{A,B,D\}} \beta_{g}^{Grade} +  \beta \mathbf{x}_b + \Gamma_{c(b)} + \gamma_{c(b)} \mathbf{w_b} + \epsilon_{b}$$
+
+.pull-left[
+- $PercentSubstandard$ is share of 2018 homes with coal or no heating fuel in block-group $b$
+- $\beta_g$ is coefficient of interest
+- $\mathbf{x_b}$ is repair class, presence of Blacks in 1936 
+]
+
+.pull-right[
+- $\Gamma_{c(b)}$ are county FEs for county $c$
+- $\gamma_{c(b)}$ are county-specific slope shifters
+- $\mathbf{w_b}$
+  - Median income in 1936, 2018
+  - Mean rent 1935
+  - Presence of Blacks in 1936
+]
+
+
+---
+class: MSU
+# Result: Substandard Heating Tech.
+
+```{r outputSubstandardHeating, out.width = '100%'}
+include_graphics(copy_to_include(file.path(texout, 'Substandard.png'), overwrite = TRUE) )
+```
+
+---
+class: MSU
+# Analysis: Hh Counsumption
+
+### Response to temperature shocks
+Home may have insufficient energy service quality if energy consumption responses to weather shocks are very large.
+--
+
+- Response is endogenous: both homes with efficient heating **and** inefficient homes who meet budget constraints with conservative thermostat settings have low consumption responses to weather shocks.
+  - Observationally equivalent without observing thermostat setpoint.
+
+---
+class: MSU
+# Analysis: Hh Consumption
+
+$$\small \begin{align}
+consumption_{ht} &= \beta_0 + \beta_1 HDD_{ht}  + \sum_{g \in \{A,B,D\}}\beta_g  \cdot HDD_{ht} \cdot \mathbb{1}(g=g(h)) \\
+&+ \sum_{l=1}^3 \sum_{s=1}^5  \beta_{ls} HDD_{ht} \cdot \mathbb{1}(NIGHTSET_h=s) \cdot \mathbb{1}(ClimateZone_h = l) + \\
+&+ \beta_{inc} \cdot HDD_{ht} \cdot avgincome_h + \Gamma_h + \varepsilon_{ht}
+\end{align}$$
+.pull-left[
+- $consumption_{ht}$ is energy (kWh, therms) consumption for household $h$ month $t$
+- $g(h)$ is HOLC Grade $g$ for $h$
+- $HDD_{ht}$ is the heating-degree day for $h$ in month $t$ 
+]
+
+.pull-right[
+- $NIGHTSET_h$ is the thermostat setting for $h$
+- $ClimateZone_h$ is the climate type for $h$
+- $income_h$ is reported income for $h$
+- $\Gamma_h$ is household $h$ fixed effect
+]
+
+---
+class: MSU
+# Result: Hh Consumption
+
+
+```{r outputElecResponse, out.width = '100%'}
+include_graphics(copy_to_include(file.path(texout, 'ResponseOutpute2.png'), overwrite = T))
+```
+
+
+---
+class: MSU
+# Result: Hh Consumption
+
+
+```{r outputGasResponse, out.width = '100%'}
+include_graphics(copy_to_include(file.path(texout, 'ResponseOutputg2.png'), overwrite = T))
+```
+
+
+---
+class: MSU
+# Conclusion
+
+#### Evidence of lingering differences in heating technology in/out of redlined areas
+- Remains after controlling for observable differences in 193X
+- Useful for targeting of energy efficiency programs
+
+
+#### Evidence of larger consumption responses to cold weather shocks in redlined areas
+- Conditional on 193X observables
+- Conditional on thermostat setpoints
+
+
+#### Further work
+- Understanding selection into Grade D (red)
+- "Stickiness" of redlined areas
+
+---
+class: MSU
+count: false
+# Thanks
+
+.font300[Thanks!]
+
+
+<br><br><br>
+
+#### [jkirk@msu.edu](mailto:jkirk@msu.edu)
+
+
 

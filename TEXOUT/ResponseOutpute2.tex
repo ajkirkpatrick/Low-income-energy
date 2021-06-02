@@ -26,34 +26,35 @@
 \begin{document}
 \begin{table}
 
-\caption{(\#tab:ResponseOutpute2)Regression of electricity consumption on heating degree days, interacted with HOLC grade and income, conditional on thermostat setpoint\label{tab:electricresponsethemset1}}
+\caption{Regression of electricity consumption on heating degree days, interacted with HOLC grade and income, conditional on thermostat setpoint\label{tab:electricresponsethemset1}}
 \centering
 \resizebox{\linewidth}{!}{
-\begin{tabular}[t]{lccc>{}c}
+\begin{tabular}[t]{lcc}
 \toprule
-\multicolumn{1}{c}{ } & \multicolumn{4}{c}{Dependent Variable: Energy consumption (kWh)} \\
-\cmidrule(l{3pt}r{3pt}){2-5}
-  & Model 1 & Model 2 & Model 3 & Model 4\\
+\multicolumn{1}{c}{ } & \multicolumn{2}{c}{Dependent Variable: Energy consumption (kWh)} \\
+\cmidrule(l{3pt}r{3pt}){2-3}
+  & Model 1 & Model 2\\
 \midrule
-hdd & 3.398*** & 0.769*** &  & \cellcolor{blue}{\textcolor{white}{}}\\
- & (0.806) & (0.160) &  & \cellcolor{blue}{\textcolor{white}{}}\\
-hdd x Grade D (Red) & 3.737*** & 2.432*** & 2.432*** & \cellcolor{blue}{\textcolor{white}{3.083***}}\\
- & (0.573) & (0.873) & (0.789) & \cellcolor{blue}{\textcolor{white}{(0.696)}}\\
-hdd x Avg rent 37-39 & -0.050*** &  &  & \cellcolor{blue}{\textcolor{white}{-0.002}}\\
- & (0.018) &  &  & \cellcolor{blue}{\textcolor{white}{(0.015)}}\\
+hdd & 3.398*** & \\
+ & (0.806) & \\
+hdd x Grade D (Red) & 3.737*** & 3.083***\\
+ & (0.573) & (0.686)\\
+hdd x Avg rent 37-39 & -0.050** & -0.002\\
+ & (0.018) & (0.017)\\
 \midrule
-Num.Obs. & 593 & 1150 & 1150 & \cellcolor{blue}{\textcolor{white}{593}}\\
-R2 Adj. & 0.804 & 0.809 & 0.834 & \cellcolor{blue}{\textcolor{white}{0.800}}\\
-FE: CZT24 &  &  & X & \cellcolor{blue}{\textcolor{white}{X}}\\
-FE: IDENT & X & X & X & \cellcolor{blue}{\textcolor{white}{X}}\\
-Hh FE & X & X & X & \cellcolor{blue}{\textcolor{white}{X}}\\
-Avg Inc x hdd & X & X & X & \cellcolor{blue}{\textcolor{white}{X}}\\
-Thermostat setting x Climate Zone x hdd &  & X & X & \cellcolor{blue}{\textcolor{white}{X}}\\
-Controls for 1937 incl. rent, presence of Blacks & X &  &  & \cellcolor{blue}{\textcolor{white}{X}}\\
+Num.Obs. & 593 & 593\\
+R2 Adj. & 0.804 & 0.800\\
+FE: CZT24 &  & X\\
+FE: IDENT & X & X\\
+Hh FE & X & X\\
+Climate zone FE &  & X\\
+Avg Inc x hdd & X & X\\
+Thermostat setting x Climate Zone x hdd &  & X\\
+Controls for 1937 incl. rent, presence of Blacks & X & X\\
 \bottomrule
-\multicolumn{5}{l}{\textsuperscript{} * p $<$ 0.1, ** p $<$ 0.05, *** p $<$ 0.01}\\
-\multicolumn{5}{l}{\textsuperscript{} Using only households with electricity as primary heating fuel}\\
-\multicolumn{5}{l}{\textsuperscript{} Omitted grade is "C"}\\
+\multicolumn{3}{l}{\textsuperscript{} + p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
+\multicolumn{3}{l}{\textsuperscript{} Using only households with elec. as primary heating fuel}\\
+\multicolumn{3}{l}{\textsuperscript{} Omitted grade is "C"}\\
 \end{tabular}}
 \end{table}
 \end{document}

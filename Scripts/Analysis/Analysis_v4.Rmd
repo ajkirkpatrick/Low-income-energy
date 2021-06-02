@@ -509,6 +509,10 @@ To estimate the correlation of redlining with current energy outcomes, I focus o
 PercentSubstandard_{b} = \beta_0 + \sum_{g=1}^4 \beta_{g}^{Grade} +  \beta \mathbf{X}_b + \beta_{county} County_b + \epsilon_{b} \label{mainSubtandard1}
 \end{eqnarray}
 
+\begin{eqnarray}
+PercentSubstandard_{b} = \beta_0 + \sum_{g=1}^4 \beta_{g}^{Grade} +  \beta \mathbf{X}_b + \beta_{county} County_b + \epsilon_{b} \label{mainSubtandard1}
+\end{eqnarray}
+
 ```{r substandard-est-1, eval = F, echo=FALSE, fig.width=7, result='as.is', message=F, warning=F, cache = TRUE}
     
     ### SEE NEXT CHUNK --- NOT EVAL
@@ -611,10 +615,10 @@ These results reflect simple FE for STCO. Next, try regression adjustment. It's 
                   
 
     my.femap = list( c('Control for home repair status 1935', rep('', 1), rep('X', 8)),
-                    c('City-specific slope on Med. Income 2018, 1936', rep('X', length(BG.list2))),
-                    c('City-specific slope on Mean Rent 1935', '',rep('X', 3), '', rep('X', 4)),
-                    c('City-specific binary on Presence of Blacks 1935', rep('',2 ), rep('X', 7)),
-                    c('Intx Predom. race 2018 and Presence of Blacks 1935', rep('', 6), rep('X', 3)) )
+                    c('County-specific slope on Med. Income 2018, 1936', rep('X', length(BG.list2))),
+                    c('County-specific slope on Mean Rent 1935', '',rep('X', 3), '', rep('X', 4)),
+                    c('County-specific binary on Presence of Blacks 1935', rep('',2 ), rep('X', 7)),
+                    c('Intx Predom. race 2018 and HOLC Grade', rep('', 6), rep('X', 3)) )
     model.use.vector = c(2,4,6,8)
     
     Substandard.Output = modelsummary(models = BG.list2[model.use.vector], se = 'cluster',
@@ -624,7 +628,7 @@ These results reflect simple FE for STCO. Next, try regression adjustment. It's 
                  stars=TRUE, fmt = '%.5f',
                  add_rows = as.data.frame(do.call(rbind, my.femap))[,c(1, 1+model.use.vector)],
                  title = 'Share of Households with Substandard Fuel (Coal and None) by HOLC Grade\\label{tab:substandardnarrow2}',
-                 notes = list('Robust SE clustered by FIPS county','Omitted Grade: C (Yellow)')) %>%  # output as kableExtra
+                 notes = list('Robust SE clustered by FIPS county','Omitted Grade: C (Yellow)','Omitted Race: White')) %>%  # output as kableExtra
       kable_styling(latex_options = 'scale_down') %>%
       add_header_above(c(' ' = 1, 'Dependent Variable: Share of Households in Block Group with Substandard Heating' = 4)) 
     
@@ -728,7 +732,7 @@ Response.Output.g1 = modelsummary(list(
                           'repair_classFair' = 'Repair Class 1937: Fair',
                           'repair_classPoor' = 'Repair Class 1937: Poor',
                           'repair_classUnk' = 'Repair Class 1937: Unknown'),
-             add_rows = as.data.frame(rbind(c('City-specific slopes for Sq. feet','X','X','X','X'),
+             add_rows = as.data.frame(rbind(c('County-specific slopes for Sq. feet','X','X','X','X'),
                                             c('Controls for Hh income, home age, kids','','X','X','X'),
                                             c('Controls for Hh ethnicity','','','','X'))),
              title = 'Regression of heating-degree day gas consumption response on HOLC grade and income \\label{tab:responsegas1}',
@@ -775,7 +779,7 @@ Response.Output.e1 = modelsummary(list(
              gof_omit = 'AIC|BIC|R2 Pseu|Log\\.|R2$|R2 Within$|Std\\.',
              coef_map = c('as.factor(GRADE.max)D' = 'Grade D (Red)',
                           'as.factor(GRADE.max)C' = 'Grade C (Yellow)'),
-             add_rows = as.data.frame(rbind(c('City-specific slopes for Sq. feet','X','X','X','X'),
+             add_rows = as.data.frame(rbind(c('County-specific slopes for Sq. feet','X','X','X','X'),
                                             c('Controls for Hh income, home age, kids','','X','X','X'),
                                             c('Controls for Hh ethnicity','','','','X'))),
              title = 'Regression of heating-degree day electricity consumption response on HOLC grade and income\\label{tab:responseelectric1}',
@@ -827,7 +831,7 @@ Response.Output.e.c = modelsummary(list(
                           'as.factor(GRADE.max)X' = 'Grade X (Ungraded)',
                           'ACTRUE' = 'Hh has AC',
                           'avginc' = 'Hh Income'),
-             add_rows = as.data.frame(rbind(c('City-specific slopes for Sq. feet','X','X','X','X'),
+             add_rows = as.data.frame(rbind(c('County-specific slopes for Sq. feet','X','X','X','X'),
                                             c('Controls for Hh income, home age, kids','','X','X','X'),
                                             c('Controls for Hh ethnicity','','','','X'))),
              title = 'Regression of cooling-degree day electricity consumption response on HOLC grade and income\\label{tab:responseelectric1}',
@@ -1181,7 +1185,7 @@ tend to have lower response to heating degree days relative to those in Grade C.
 
 
 
-```{r ResponseOutpute2, message=F, warning=F, echo = F, cache = TRUE}
+```{r PrepResponseOutput, message = F, warning = F, echo=F, cache = T}
 # What if we pool all of the monthly bill observations? 
 all09.use.pooled.e = all09.use %>% unnest(edata) %>% dplyr::filter(share.max > .90 & cdd<=0 & (PHTELCRH==1|PHTELBSB==1)) %>%
   dplyr::mutate(NITESET = relevel(NITESET, ref = '>75'),
@@ -1189,13 +1193,26 @@ all09.use.pooled.e = all09.use %>% unnest(edata) %>% dplyr::filter(share.max > .
                 ethnicity = relevel(ethnicity, ref = 'White'),
                 avginc1000 = avginc/1000)
 
+
+all09.use.pooled.g = all09.use %>% unnest(gdata) %>% dplyr::filter(share.max > .80 & cdd<=0 & (PHTNGCNT==1|PHTNGRAD==1)) %>%
+  dplyr::mutate(NITESET = relevel(NITESET, ref = '>75'),
+                DAYSET = relevel(DAYSET, ref = '>75'),
+                ethnicity = relevel(ethnicity, ref = 'White'),
+                GRADE.maxl = fct_relevel(GRADE.max, 'C','X','D'),
+                avginc1000 = avginc/1000)
+```
+
+
+
+
+```{r ResponseOutpute2, message=F, warning=F, echo = F, cache = TRUE}
 Response.Output.e2 = modelsummary(list(
   feols(u ~ hdd + hdd:GRADE.max + hdd:avginc + hdd:Rent3739_Mean + hdd:NBlack_YN  | IDENT, weights=~d, data = all09.use.pooled.e, warn = F), # Do redlined areas have diff. responses?
 # feols(u ~ hdd + hdd:GRADE.max + hdd:NITESET +  hdd:avginc  | IDENT, weights=~d, data = all09.use.pooled.e, warn = F) , # Do redlined areas have diff. responses cond. on setpoint
 # feols(u ~ hdd + hdd:GRADE.max + hdd:DAYSET  +  hdd:avginc   | IDENT,  weights=~d, data = all09.use.pooled.e, warn = F) ,# Or daytime setting
 # feols(u ~ hdd + hdd:GRADE.max + hdd:NITESET +  hdd:avginc  + hdd:Rent3739_Mean + hdd:NBlack_YN | IDENT, weights=~d, data = all09.use.pooled.e, warn = F), 
-  feols(u ~ hdd + hdd:GRADE.max + hdd:DAYSET:as.factor(CZT24) + hdd:NITESET:as.factor(CZT24) + hdd:avginc  | IDENT , weights=~d, data = all09.use.pooled.e, warn = F),
-  feols(u ~ hdd + hdd:GRADE.max + hdd:DAYSET:as.factor(CZT24) + hdd:NITESET:as.factor(CZT24) + hdd:avginc  | IDENT + CZT24[hdd], weights=~d, data = all09.use.pooled.e, warn = F),
+ # feols(u ~ hdd + hdd:GRADE.max + hdd:DAYSET:as.factor(CZT24) + hdd:NITESET:as.factor(CZT24) + hdd:avginc  | IDENT , weights=~d, data = all09.use.pooled.e, warn = F),
+ # feols(u ~ hdd + hdd:GRADE.max + hdd:DAYSET:as.factor(CZT24) + hdd:NITESET:as.factor(CZT24) + hdd:avginc  | IDENT + CZT24[hdd], weights=~d, data = all09.use.pooled.e, warn = F),
   feols(u ~ hdd + hdd:GRADE.max + hdd:DAYSET:as.factor(CZT24) + hdd:NITESET:as.factor(CZT24) + hdd:avginc + hdd:Rent3739_Mean + hdd:NBlack_YN | IDENT + CZT24[hdd], weights=~d, data = all09.use.pooled.e, warn = F)),# Or daytime setting
   stars = T,
   gof_omit = 'AIC|BIC|R2 Pseu|Log\\.|R2$|R2 Within$|Std\\.',
@@ -1204,15 +1221,16 @@ Response.Output.e2 = modelsummary(list(
                'hdd:avgin' = 'hdd x Hh Inc',
                'hdd:Rent3739_Mean' = 'hdd x Avg rent 37-39'),
   add_rows = as.data.frame(rbind(c('Hh FE','X','X','X','X'),
+                                 c('Climate zone FE','','X','X','X'),
                                  c('Avg Inc x hdd','X','X','X','X'),
                                  c('Thermostat setting x Climate Zone x hdd','','X','X','X'),
-                                 c('Controls for 1937 incl. rent, presence of Blacks','X','','','X'))),
+                                 c('Controls for 1937 incl. rent, presence of Blacks','X','','','X')))[,c(1,2,5)],
   title = 'Regression of electricity consumption on heating degree days, interacted with HOLC grade and income, conditional on thermostat setpoint\\label{tab:electricresponsethemset1}',
-  notes = c('Using only households with electricity as primary heating fuel','Omitted grade is "C"'),
+  notes = c('Using only households with elec. as primary heating fuel','Omitted grade is "C"'),
   output = 'latex') %>%
   kable_styling(latex_options = 'scale_down')  %>%
-  add_header_above(c(' ' = 1, 'Dependent Variable: Energy consumption (kWh)' = 4)) %>%
-  column_spec(5, color = 'white', background = 'blue')
+  add_header_above(c(' ' = 1, 'Dependent Variable: Energy consumption (kWh)' = 2)) # %>%
+ #  column_spec(5, color = 'white', background = 'blue')
 
 
 
@@ -1220,8 +1238,8 @@ writeLines(Response.Output.e2, con = file.path(texout, 'ResponseOutpute2.tex'))
 
 so = suppressWarnings(Response.Output.e2 %>% save_kable(file = file.path(texout, 'ResponseOutpute2.png'), keep_tex = T,  latex_header_includes = NULL, density = 300))
 
-# include_graphics(so)
-Response.Output.e2
+include_graphics(so)
+# Response.Output.e2
 
 
 
@@ -1248,40 +1266,36 @@ for overnight comfort, but rather face higher expenditures simply to maintain on
 
 
 ```{r ResponseOutputg2, message=F, warning=F, echo = F, cache = TRUE}
-all09.use.pooled.g = all09.use %>% unnest(gdata) %>% dplyr::filter(share.max > .80 & cdd<=0 & (PHTNGCNT==1|PHTNGRAD==1)) %>%
-  dplyr::mutate(NITESET = relevel(NITESET, ref = '>75'),
-                DAYSET = relevel(DAYSET, ref = '>75'),
-                ethnicity = relevel(ethnicity, ref = 'White'),
-                GRADE.maxl = fct_relevel(GRADE.max, 'C','X','D'),
-                avginc1000 = avginc/1000)
+
 
 Response.Output.g2 = modelsummary(list(
   feols(u ~ hdd + hdd:GRADE.max + hdd:avginc + hdd:Rent3739_Mean + hdd:NBlack_YN  | IDENT, weights=~d, data = all09.use.pooled.g, warn = F), 
-  feols(u ~ hdd + hdd:GRADE.max + hdd:DAYSET:as.factor(CZT24) + hdd:NITESET:as.factor(CZT24) + hdd:avginc  | IDENT , weights=~d, data = all09.use.pooled.g, warn = F),
-  feols(u ~ hdd + hdd:GRADE.max + hdd:DAYSET:as.factor(CZT24) + hdd:NITESET:as.factor(CZT24) + hdd:avginc  | IDENT + CZT24[hdd], weights=~d, data = all09.use.pooled.g, warn = F),
+#  feols(u ~ hdd + hdd:GRADE.max + hdd:DAYSET:as.factor(CZT24) + hdd:NITESET:as.factor(CZT24) + hdd:avginc  | IDENT , weights=~d, data = all09.use.pooled.g, warn = F),
+#  feols(u ~ hdd + hdd:GRADE.max + hdd:DAYSET:as.factor(CZT24) + hdd:NITESET:as.factor(CZT24) + hdd:avginc  | IDENT + CZT24[hdd], weights=~d, data = all09.use.pooled.g, warn = F),
   feols(u ~ hdd + hdd:GRADE.max + hdd:DAYSET:as.factor(CZT24) + hdd:NITESET:as.factor(CZT24) + hdd:avginc + hdd:Rent3739_Mean + hdd:NBlack_YN | IDENT + CZT24[hdd], weights=~d, data = all09.use.pooled.g, warn = F)),# Or daytime setting
   stars = T,
   gof_omit = 'AIC|BIC|R2 Pseu|Log\\.|R2$|R2 Within$|Std\\.',
   coef_map = c('hdd' = 'hdd',
-               'hdd:GRADE.maxD' = 'hdd x Grade D (Red)'),
+               'hdd:GRADE.maxD' = 'hdd x Grade D (Red)',
+               'hdd:Rent3739_Mean' = 'hdd x Avg rent 37-39'),
   add_rows = as.data.frame(rbind(c('Hh FE','X','X','X','X'),
                                  c('Hdd x avg inc','X','X','X','X'),
                                  c('Hdd x thermostat setting x Climate Zone','','X','X','X'),
-                                 c('Hdd x controls for 1937 incl. rent, presence of Blacks','X','','','X'))),
+                                 c('Hdd x controls for 1937 incl. rent, presence of Blacks','X','','','X')))[,c(1,2,5)],
   title = 'Regression of natural gas consumption on heating degree days, interacted with HOLC grade and income, conditional on thermostat setpoint\\label{tab:electricresponsethemset1}',
   notes = c('Using only households with natural gas as primary heating fuel','Omitted grade is "C"'),
   output = 'latex') %>%
   kable_styling(latex_options = 'scale_down')  %>%
-  add_header_above(c(' ' = 1, 'Dependent Variable: Energy consumption (therms)' = 4)) %>%
-  column_spec(5, color = 'white', background = 'blue')
+  add_header_above(c(' ' = 1, 'Dependent Variable: Energy consumption (therms)' = 2))
+
 
 
 writeLines(Response.Output.g2, con = file.path(texout, 'ResponseOutputg2.tex'))
 
 so = suppressWarnings(Response.Output.g2 %>% save_kable(file = file.path(texout, 'ResponseOutputg2.png'), keep_tex = T,  latex_header_includes = NULL, density = 300))
 
-# include_graphics(so)
-Response.Output.g2
+include_graphics(so)
+# Response.Output.g2
 
 
 ```
@@ -1372,8 +1386,8 @@ writeLines(Response.Output.g3, con = file.path(texout, 'ResponseOutputg3.tex'))
 
 so = suppressWarnings(Response.Output.g3 %>% save_kable(file = file.path(texout, 'ResponseOutputg3.png'), keep_tex = T,  latex_header_includes = NULL, density = 300))
 
-# include_graphics(so)
-Response.Output.g3
+include_graphics(so)
+# Response.Output.g3
 
 ```
 

@@ -26,32 +26,34 @@
 \begin{document}
 \begin{table}
 
-\caption{(\#tab:ResponseOutputg2)Regression of natural gas consumption on heating degree days, interacted with HOLC grade and income, conditional on thermostat setpoint\label{tab:electricresponsethemset1}}
+\caption{Regression of natural gas consumption on heating degree days, interacted with HOLC grade and income, conditional on thermostat setpoint\label{tab:electricresponsethemset1}}
 \centering
 \resizebox{\linewidth}{!}{
-\begin{tabular}[t]{lccc>{}c}
+\begin{tabular}[t]{lcc}
 \toprule
-\multicolumn{1}{c}{ } & \multicolumn{4}{c}{Dependent Variable: Energy consumption (therms)} \\
-\cmidrule(l{3pt}r{3pt}){2-5}
-  & Model 1 & Model 2 & Model 3 & Model 4\\
+\multicolumn{1}{c}{ } & \multicolumn{2}{c}{Dependent Variable: Energy consumption (therms)} \\
+\cmidrule(l{3pt}r{3pt}){2-3}
+  & Model 1 & Model 2\\
 \midrule
-hdd & 0.311*** & 0.036 &  & \cellcolor{blue}{\textcolor{white}{}}\\
- & (0.089) & (0.137) &  & \cellcolor{blue}{\textcolor{white}{}}\\
-hdd x Grade D (Red) & 0.121 & 0.143 & 0.143 & \cellcolor{blue}{\textcolor{white}{0.157}}\\
- & (0.244) & (0.267) & (0.255) & \cellcolor{blue}{\textcolor{white}{(0.260)}}\\
+hdd & 0.311*** & \\
+ & (0.089) & \\
+hdd x Grade D (Red) & 0.121 & 0.157\\
+ & (0.244) & (0.260)\\
+hdd x Avg rent 37-39 & -0.001 & 0.000\\
+ & (0.001) & (0.001)\\
 \midrule
-Num.Obs. & 3623 & 5772 & 5772 & \cellcolor{blue}{\textcolor{white}{3623}}\\
-R2 Adj. & 0.564 & 0.565 & 0.564 & \cellcolor{blue}{\textcolor{white}{0.552}}\\
-FE: CZT24 &  &  & X & \cellcolor{blue}{\textcolor{white}{X}}\\
-FE: IDENT & X & X & X & \cellcolor{blue}{\textcolor{white}{X}}\\
-Hh FE & X & X & X & \cellcolor{blue}{\textcolor{white}{X}}\\
-Hdd x avg inc & X & X & X & \cellcolor{blue}{\textcolor{white}{X}}\\
-Hdd x thermostat setting x Climate Zone &  & X & X & \cellcolor{blue}{\textcolor{white}{X}}\\
-Hdd x controls for 1937 incl. rent, presence of Blacks & X &  &  & \cellcolor{blue}{\textcolor{white}{X}}\\
+Num.Obs. & 3623 & 3623\\
+R2 Adj. & 0.564 & 0.552\\
+FE: CZT24 &  & X\\
+FE: IDENT & X & X\\
+Hh FE & X & X\\
+Hdd x avg inc & X & X\\
+Hdd x thermostat setting x Climate Zone &  & X\\
+Hdd x controls for 1937 incl. rent, presence of Blacks & X & X\\
 \bottomrule
-\multicolumn{5}{l}{\textsuperscript{} * p $<$ 0.1, ** p $<$ 0.05, *** p $<$ 0.01}\\
-\multicolumn{5}{l}{\textsuperscript{} Using only households with natural gas as primary heating fuel}\\
-\multicolumn{5}{l}{\textsuperscript{} Omitted grade is "C"}\\
+\multicolumn{3}{l}{\textsuperscript{} + p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
+\multicolumn{3}{l}{\textsuperscript{} Using only households with natural gas as primary heating fuel}\\
+\multicolumn{3}{l}{\textsuperscript{} Omitted grade is "C"}\\
 \end{tabular}}
 \end{table}
 \end{document}
