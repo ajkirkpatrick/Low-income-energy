@@ -3,7 +3,7 @@ title: "Energy Insecurity in Redlined America"
 subtitle: "AERE 2021"
 author: "A. Justin Kirkpatrick"
 institute: "Michigan State University"
-date: "June 2021<br><br><br>.font60[Generous funding provided by the Nicholas Institute at Duke]"
+date: "June 2021<br><br><br>.font70[Generous funding provided by the Nicholas Institute at Duke]<br>[Most recent web-based slides here](https://tinyurl.com/kirkpatrickAERE21)"
 output:
   xaringan::moon_reader:
     lib_dir: libs

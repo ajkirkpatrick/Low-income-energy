@@ -29,31 +29,31 @@
 \caption{Regression of natural gas consumption on heating degree days, interacted with HOLC grade and income, conditional on thermostat setpoint\label{tab:electricresponsethemset1}}
 \centering
 \resizebox{\linewidth}{!}{
-\begin{tabular}[t]{lcc}
+\begin{tabular}[t]{lccc}
 \toprule
-\multicolumn{1}{c}{ } & \multicolumn{2}{c}{Dependent Variable: Energy consumption (therms)} \\
-\cmidrule(l{3pt}r{3pt}){2-3}
-  & Model 1 & Model 2\\
+\multicolumn{1}{c}{ } & \multicolumn{3}{c}{Dependent Variable: Energy consumption (therms)} \\
+\cmidrule(l{3pt}r{3pt}){2-4}
+  & Model 1 & Model 2 & Model 3\\
 \midrule
-hdd & 0.311*** & \\
- & (0.089) & \\
-hdd x Grade D (Red) & 0.121 & 0.157\\
- & (0.244) & (0.260)\\
-hdd x Avg rent 37-39 & -0.001 & 0.000\\
- & (0.001) & (0.001)\\
+hdd & 0.311*** & 0.280* & \\
+ & (0.089) & (0.111) & \\
+hdd x Grade D (Red) & 0.121 & 0.112 & 0.144\\
+ & (0.244) & (0.245) & (0.247)\\
+hdd x Avg rent 37-39 & -0.001 & -0.001 & 0.001\\
+ & (0.001) & (0.002) & (0.001)\\
 \midrule
-Num.Obs. & 3623 & 3623\\
-R2 Adj. & 0.564 & 0.552\\
-FE: CZT24 &  & X\\
-FE: IDENT & X & X\\
-Hh FE & X & X\\
-Hdd x avg inc & X & X\\
-Hdd x thermostat setting x Climate Zone &  & X\\
-Hdd x controls for 1937 incl. rent, presence of Blacks & X & X\\
+Num.Obs. & 3623 & 3623 & 3623\\
+R2 Adj. & 0.564 & 0.563 & 0.556\\
+FE: CZT24 &  &  & X\\
+FE: IDENT & X & X & X\\
+Hdd x avg inc & X & X & X\\
+hdd x thermostat setting &  & X & X\\
+Hdd x thermostat setting x Climate Zone &  &  & X\\
+Hdd x controls for 1937 incl. rent, presence of Blacks & X &  & X\\
 \bottomrule
-\multicolumn{3}{l}{\textsuperscript{} + p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
-\multicolumn{3}{l}{\textsuperscript{} Using only households with natural gas as primary heating fuel}\\
-\multicolumn{3}{l}{\textsuperscript{} Omitted grade is "C"}\\
+\multicolumn{4}{l}{\textsuperscript{} + p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
+\multicolumn{4}{l}{\textsuperscript{} Using only households with natural gas as primary heating fuel}\\
+\multicolumn{4}{l}{\textsuperscript{} Omitted grade is "C"}\\
 \end{tabular}}
 \end{table}
 \end{document}

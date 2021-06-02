@@ -1208,28 +1208,28 @@ all09.use.pooled.g = all09.use %>% unnest(gdata) %>% dplyr::filter(share.max > .
 ```{r ResponseOutpute2, message=F, warning=F, echo = F, cache = TRUE}
 Response.Output.e2 = modelsummary(list(
   feols(u ~ hdd + hdd:GRADE.max + hdd:avginc + hdd:Rent3739_Mean + hdd:NBlack_YN  | IDENT, weights=~d, data = all09.use.pooled.e, warn = F), # Do redlined areas have diff. responses?
-# feols(u ~ hdd + hdd:GRADE.max + hdd:NITESET +  hdd:avginc  | IDENT, weights=~d, data = all09.use.pooled.e, warn = F) , # Do redlined areas have diff. responses cond. on setpoint
+  feols(u ~ hdd + hdd:GRADE.max + hdd:NITESET +  hdd:avginc  | IDENT, weights=~d, data = all09.use.pooled.e, warn = F) , # Do redlined areas have diff. responses cond. on setpoint
 # feols(u ~ hdd + hdd:GRADE.max + hdd:DAYSET  +  hdd:avginc   | IDENT,  weights=~d, data = all09.use.pooled.e, warn = F) ,# Or daytime setting
 # feols(u ~ hdd + hdd:GRADE.max + hdd:NITESET +  hdd:avginc  + hdd:Rent3739_Mean + hdd:NBlack_YN | IDENT, weights=~d, data = all09.use.pooled.e, warn = F), 
  # feols(u ~ hdd + hdd:GRADE.max + hdd:DAYSET:as.factor(CZT24) + hdd:NITESET:as.factor(CZT24) + hdd:avginc  | IDENT , weights=~d, data = all09.use.pooled.e, warn = F),
  # feols(u ~ hdd + hdd:GRADE.max + hdd:DAYSET:as.factor(CZT24) + hdd:NITESET:as.factor(CZT24) + hdd:avginc  | IDENT + CZT24[hdd], weights=~d, data = all09.use.pooled.e, warn = F),
-  feols(u ~ hdd + hdd:GRADE.max + hdd:DAYSET:as.factor(CZT24) + hdd:NITESET:as.factor(CZT24) + hdd:avginc + hdd:Rent3739_Mean + hdd:NBlack_YN | IDENT + CZT24[hdd], weights=~d, data = all09.use.pooled.e, warn = F)),# Or daytime setting
+  feols(u ~ hdd + hdd:GRADE.max + hdd:NITESET:as.factor(CZT24) + hdd:avginc + hdd:Rent3739_Mean + hdd:NBlack_YN | IDENT + CZT24[hdd], weights=~d, data = all09.use.pooled.e, warn = F)),# Or daytime setting
   stars = T,
   gof_omit = 'AIC|BIC|R2 Pseu|Log\\.|R2$|R2 Within$|Std\\.',
   coef_map = c('hdd' = 'hdd',
                'hdd:GRADE.maxD' = 'hdd x Grade D (Red)',
                'hdd:avgin' = 'hdd x Hh Inc',
                'hdd:Rent3739_Mean' = 'hdd x Avg rent 37-39'),
-  add_rows = as.data.frame(rbind(c('Hh FE','X','X','X','X'),
-                                 c('Climate zone FE','','X','X','X'),
+  add_rows = as.data.frame(rbind(c('Climate zone FE','','X','X','X'),
                                  c('Avg Inc x hdd','X','X','X','X'),
+                                 c('hdd x Thermostat setting','','X','X','X'),
                                  c('Thermostat setting x Climate Zone x hdd','','X','X','X'),
-                                 c('Controls for 1937 incl. rent, presence of Blacks','X','','','X')))[,c(1,2,5)],
+                                 c('Controls for 1937 incl. rent, presence of Blacks','X','','','X')))[,c(1,2,3,5)],
   title = 'Regression of electricity consumption on heating degree days, interacted with HOLC grade and income, conditional on thermostat setpoint\\label{tab:electricresponsethemset1}',
   notes = c('Using only households with elec. as primary heating fuel','Omitted grade is "C"'),
   output = 'latex') %>%
   kable_styling(latex_options = 'scale_down')  %>%
-  add_header_above(c(' ' = 1, 'Dependent Variable: Energy consumption (kWh)' = 2)) # %>%
+  add_header_above(c(' ' = 1, 'Dependent Variable: Energy consumption (kWh)' = 3)) # %>%
  #  column_spec(5, color = 'white', background = 'blue')
 
 
@@ -1270,23 +1270,23 @@ for overnight comfort, but rather face higher expenditures simply to maintain on
 
 Response.Output.g2 = modelsummary(list(
   feols(u ~ hdd + hdd:GRADE.max + hdd:avginc + hdd:Rent3739_Mean + hdd:NBlack_YN  | IDENT, weights=~d, data = all09.use.pooled.g, warn = F), 
-#  feols(u ~ hdd + hdd:GRADE.max + hdd:DAYSET:as.factor(CZT24) + hdd:NITESET:as.factor(CZT24) + hdd:avginc  | IDENT , weights=~d, data = all09.use.pooled.g, warn = F),
+  feols(u ~ hdd + hdd:GRADE.max + hdd*NITESET + hdd:avginc + hdd:Rent3739_Mean + hdd:NBlack_YN | IDENT , weights=~d, data = all09.use.pooled.g, warn = F),
 #  feols(u ~ hdd + hdd:GRADE.max + hdd:DAYSET:as.factor(CZT24) + hdd:NITESET:as.factor(CZT24) + hdd:avginc  | IDENT + CZT24[hdd], weights=~d, data = all09.use.pooled.g, warn = F),
-  feols(u ~ hdd + hdd:GRADE.max + hdd:DAYSET:as.factor(CZT24) + hdd:NITESET:as.factor(CZT24) + hdd:avginc + hdd:Rent3739_Mean + hdd:NBlack_YN | IDENT + CZT24[hdd], weights=~d, data = all09.use.pooled.g, warn = F)),# Or daytime setting
+  feols(u ~ hdd + hdd:GRADE.max + hdd:NITESET:as.factor(CZT24) + hdd:avginc + hdd:Rent3739_Mean + hdd:NBlack_YN | IDENT + CZT24[hdd], weights=~d, data = all09.use.pooled.g, warn = F)),# Or daytime setting
   stars = T,
   gof_omit = 'AIC|BIC|R2 Pseu|Log\\.|R2$|R2 Within$|Std\\.',
   coef_map = c('hdd' = 'hdd',
                'hdd:GRADE.maxD' = 'hdd x Grade D (Red)',
                'hdd:Rent3739_Mean' = 'hdd x Avg rent 37-39'),
-  add_rows = as.data.frame(rbind(c('Hh FE','X','X','X','X'),
-                                 c('Hdd x avg inc','X','X','X','X'),
-                                 c('Hdd x thermostat setting x Climate Zone','','X','X','X'),
-                                 c('Hdd x controls for 1937 incl. rent, presence of Blacks','X','','','X')))[,c(1,2,5)],
+  add_rows = as.data.frame(rbind(c('Hdd x avg inc','X','X','X','X'),
+                                 c('hdd x thermostat setting','','X','X','X'),
+                                 c('Hdd x thermostat setting x Climate Zone','','','X','X'),
+                                 c('Hdd x controls for 1937 incl. rent, presence of Blacks','X','','','X')))[,c(1,2,3,5)],
   title = 'Regression of natural gas consumption on heating degree days, interacted with HOLC grade and income, conditional on thermostat setpoint\\label{tab:electricresponsethemset1}',
   notes = c('Using only households with natural gas as primary heating fuel','Omitted grade is "C"'),
   output = 'latex') %>%
   kable_styling(latex_options = 'scale_down')  %>%
-  add_header_above(c(' ' = 1, 'Dependent Variable: Energy consumption (therms)' = 2))
+  add_header_above(c(' ' = 1, 'Dependent Variable: Energy consumption (therms)' = 3))
 
 
 
@@ -1394,6 +1394,17 @@ include_graphics(so)
 Table \ref{tab:gasresponsethemset2} shows an insufficient number of gas households in HOLC grade D (red) areas which precludes us from seeing the effect of HOLC red on response to heating degree days.
 Results focused on ethnicity show that Hispanic households are less responsive to heating degree days conditional on daytime and nighttime 
 thermostat setpoints. A similar result for Black households is not significant.\cite{Reames2016} \cite{Baxter1998}
+
+```{r OrdinalSetpoint, eval = F}
+require(MASS)
+
+all09.all = all09.use %>%
+  dplyr::filter(NITESET!='Unk' & DAYSET !='Unk' & !is.na(NITESET) & !is.na(avginc)) %>%
+  dplyr::mutate(NITESET = fct_drop(NITESET))
+
+m1 = polr(NITESET ~  poly(avginc,2) +  GRADE.max*avginc, all09.all)
+m1
+```
 
 
 Should be a bib here
