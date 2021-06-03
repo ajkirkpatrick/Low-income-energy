@@ -288,7 +288,7 @@ class: MSU
 .pull-left[
 - `\(PercentSubstandard\)` is share of 2018 homes with coal or no heating fuel in block-group `\(b\)`
 - `\(\beta_g\)` is coefficient of interest
-- `\(\mathbf{x_b}\)` is repair class, presence of Blacks in 1936 
+- `\(\mathbf{x_b}\)` is repair class, 2018 demographics
 ]
 
 .pull-right[
@@ -325,7 +325,7 @@ class: MSU
 # Analysis: Hh Consumption
 
 `$$\small \begin{align}
-consumption_{ht} &amp;= \beta_0 + \beta_1 HDD_{ht}  + \sum_{g \in \{A,B,D\}}\beta_g  \cdot HDD_{ht} \cdot \mathbb{1}(g=g(h)) \\
+consumption_{ht} &amp;= \beta_0 + \beta_1 HDD_{ht}  + \sum_{g \in \{A,B,D\}} \color{orange}\beta_{g}\color{black}  \cdot HDD_{ht} \cdot \mathbb{1}(g=g(h)) \\
 &amp;+ \sum_{l=1}^3 \sum_{s=1}^5  \beta_{ls} HDD_{ht} \cdot \mathbb{1}(NIGHTSET_h=s) \cdot \mathbb{1}(ClimateZone_h = l) + \\
 &amp;+ \beta_{inc} \cdot HDD_{ht} \cdot avgincome_h + \Gamma_h + \varepsilon_{ht}
 \end{align}$$`
