@@ -89,7 +89,7 @@ class: MSU
 
 - Preferences &amp; Sorting?
 
-  - Lower-efficiency homes are less expensive, income constraints `\(\rightarrow\)` "coming to the nuisance" (Banzhaf, 2011)
+  - Lower-efficiency homes are less expensive, income constraints `\(\rightarrow\)` "coming to the nuisance" (Banzhaf, 2011; Depro et al, 2015)
   - But conditional on income, do minority households prefer lower efficiency?
   - Lower utility of heating? Lower utility of non-energy consumption?
 --
@@ -127,7 +127,7 @@ class: MSU
 - New Deal agency tasked with assessing mortgage risk for federal refinancing efforts
 - Neighborhoods risk-graded by local agents 1933-1939
 - Largely considered "subversive minorities" to be harbinger of decline and risk.
-- *De facto* discrimination in housing was widespread 
+- Widespread discrimination in housing via discriminatory lending
 ]
 
 .pull-right[
@@ -141,10 +141,10 @@ class: MSU
 class: MSU
 # Research Question
 
-### Energy Inequity is in part the result of a *hysteresis* effect rooted in historic housing discrimination.
+### `\(H_0\)`: Energy Inequity is in part the result of a *hysteresis* effect rooted in historic housing discrimination.
 Redlining was a "critical juncture" that separated otherwise similar housing stock.
 
-- Test by examining differences in home energy services quality between redlined and observably similar households, measured as the 
+- Test by examining differences in home energy services quality between redlined and observably similar non-redlined households, measured as the 
   - (1) .orange[*presence of sufficient heating technology*] and 
   - (2) .orange[*energy consumption responses to cold weather shocks*]
   - Controlling for historic and current small neighborhood characteristics
@@ -181,12 +181,17 @@ class: MSU
 
 ### Empirical strategy
 Acknowledging Fishback et al (2020), I control for selection on observables:
-- Rent and income (historic and current)
+.pull-left[
+- Rent in 193X
+- Income in 193X
+]
+.pull-right[
 - Presence of minorities in 193X
-- Repair and quality of housing in 193X
+- Repair quality of housing in 193X
+]
 
-
-.orange[Assume: conditional on observables that determined selection, Grade D (red) is as good as randomly assigned]
+### .orange[Assume:]
+  - Conditional on observables that determined selection, Grade D (red) is as good as randomly assigned
   - Unobserved neighborhood characteristics in 1930's not captured by observables are no longer relevant today.
  
  
@@ -202,16 +207,17 @@ Acknowledging Fishback et al (2020), I control for selection on observables:
 class: MSU
 # Analysis
 
+### Measuring along two outcomes:
 
-#### (1) Presence of sufficient heating technology
-- Ask "are there differences in heating sources between redlined and near-redlined homes, controlling for selection on observables?"
+#### (1) Presence of sufficient heating technology in 2018
+- Ask "are there currently differences in heating sources between redlined and near-redlined homes, controlling for selection on observables?"
 - Substandard heating technology = Coal or "None"
 - Requires spatially explicit heating fuel use
 
 
 #### (2)  Energy consumption responses to cold weather shocks
-- Ask "are there differences in energy consumption responses to weather shocks between redlined and near-redlined homes, controlling for selection on observables?"
-- Data on monthly consumption and heating degree days for households in Grade D / Grade C areas
+- Ask "are there currently differences in energy consumption responses to weather shocks between redlined and near-redlined homes, controlling for selection on observables?"
+- Data on monthly consumption and heating degree days for households in Grade D / Grade C areas (12-19 months)
 - Requires spatially explicit household electricity consumption with income
 
 
@@ -277,7 +283,7 @@ class: MSU
 
 ### Flexible fixed effect specification
 &lt;br&gt;&lt;br&gt;
-`$$PercentSubstandard_{b} = \beta_0 + \sum_{g\in \{A,B,D\}} \beta_{g}^{Grade} +  \beta \mathbf{x}_b + \Gamma_{c(b)} + \gamma_{c(b)} \mathbf{w_b} + \epsilon_{b}$$`
+`$$PercentSubstandard_{b} = \beta_0 + \sum_{g\in \{A,B,D\}} \color{orange}\beta_{g}\color{black} +  \beta \mathbf{x}_b  + \gamma_{c(b)} \mathbf{w_b} +  \Gamma_{c(b)} + \epsilon_{b}$$`
 
 .pull-left[
 - `\(PercentSubstandard\)` is share of 2018 homes with coal or no heating fuel in block-group `\(b\)`
@@ -303,14 +309,16 @@ class: MSU
 
 ---
 class: MSU
-# Analysis: Hh Counsumption
+# Analysis: Hh Consumption
 
 ### Response to temperature shocks
 Home may have insufficient energy service quality if energy consumption responses to weather shocks are very large.
 --
 
-- Response is endogenous: both homes with efficient heating **and** inefficient homes who meet budget constraints with conservative thermostat settings have low consumption responses to weather shocks.
-  - Observationally equivalent without observing thermostat setpoint.
+- Consumption response is endogenous
+- Both will have low consumption response to weather shocks:
+  - Homes with efficient heating 
+  - Inefficient homes who meet budget constraints with conservative thermostat settings
 
 ---
 class: MSU
