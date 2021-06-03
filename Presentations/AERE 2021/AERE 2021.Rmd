@@ -118,7 +118,7 @@ class: MSU
 
 - Drehobl and Ross (2016) find 75th percentile energy burdens above 26%.
 - Lyubich (2020) finds minority households spend more on energy
-- Doremus et al (2021) finds low-income households use more energy during weather extremes
+- Doremus et al (2021) finds low-income and high-income consume energy differently during weather extremes
 
 --
 
@@ -143,7 +143,6 @@ class: MSU
 
   - Lower-efficiency homes are less expensive, income constraints $\rightarrow$ "coming to the nuisance" (Banzhaf, 2011; Depro et al, 2015)
   - But conditional on income, do minority households prefer lower efficiency?
-  - Lower utility of heating? Lower utility of non-energy consumption?
 --
 
 
@@ -253,22 +252,6 @@ Acknowledging Fishback et al (2020), I control for selection on observables:
 - Drawback: leaning on linear controls.
   - Solution: very flexible with linear controls.
   
----
-class: MSU
-# Analysis
-
-### Measuring along two outcomes:
-
-#### (1) Presence of sufficient heating technology in 2018
-- Ask "are there currently differences in heating sources between redlined and near-redlined homes, controlling for selection on observables?"
-- Substandard heating technology = Coal or "None"
-- Requires spatially explicit heating fuel use
-
-
-#### (2)  Energy consumption responses to cold weather shocks
-- Ask "are there currently differences in energy consumption responses to weather shocks between redlined and near-redlined homes, controlling for selection on observables?"
-- Data on monthly consumption and heating degree days for households in Grade D / Grade C areas (12-19 months)
-- Requires spatially explicit household electricity consumption with income
 
 
 ---
